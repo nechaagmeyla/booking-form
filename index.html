@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Kendaraan</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #ff0000, #ffffff);
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      background: #fff;
+      margin: 50px auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #b30000;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-top: 5px;
+    }
+    button {
+      background-color: #b30000;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #800000;
+    }
+    .hidden {
+      display: none;
+    }
+    .error {
+      color: red;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="login-section">
+    <h2>Login Booking</h2>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" required>
+    </div>
+    <button onclick="handleLogin()">Login</button>
+    <p class="error" id="login-error"></p>
+  </div>
+
+  <div class="container hidden" id="form-section">
+    <h2>Form Booking Kendaraan</h2>
+    <form id="bookingForm">
+      <div class="form-group">
+        <label>Nomor Polisi:</label>
+        <input type="text" name="plat" required>
+      </div>
+      <div class="form-group">
+        <label>Tipe Kendaraan:</label>
+        <input type="text" name="tipe" required>
+      </div>
+      <div class="form-group">
+        <label>Tahun Kendaraan:</label>
+        <input type="text" name="tahun" required>
+      </div>
+      <div class="form-group">
+        <label>No HP:</label>
+        <input type="text" name="nohp" required>
+      </div>
+      <div class="form-group">
+        <label>Customer Akan Datang:</label>
+        <input type="text" name="datang" required>
+      </div>
+      <div class="form-group">
+        <label>Nama Customer:</label>
+        <input type="text" name="nama" required>
+      </div>
+      <div class="form-group">
+        <label>Tanggal Penerimaan:</label>
+        <input type="date" name="tanggal_penerimaan" required>
+      </div>
+      <div class="form-group">
+        <label>VIA:</label>
+        <select name="via" required>
+          <option value="AW">AW</option>
+          <option value="SA">SA</option>
+          <option value="TAB">TAB</option>
+          <option value="MRS">MRS</option>
+          <option value="TLP">TLP</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Admin:</label>
+        <select name="admin" required>
+          <option value="Frenty">Frenty</option>
+          <option value="Risa">Risa</option>
+          <option value="AW">AW</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Jenis Pekerjaan:</label>
+        <textarea name="keluhan" required></textarea>
+      </div>
+      <div class="form-group">
+        <label>Nama Sales (opsional):</label>
+        <input type="text" name="sales">
+      </div>
+      <button type="submit">Kirim Booking</button>
+      <p class="error" id="form-error"></p>
+    </form>
+  </div>
+
+  <script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxjIxOSx9CqB1ILMaIp4owvhFQzDhLEW_zWG-MvH67KDaNNPoG_Ij_z8mpxzkzeLS-4/exec"; // Ganti dengan URL Web App kamu
+
+    function handleLogin() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const error = document.getElementById("login-error");
+
+      if (email === "agmeylanecha@gmail.com" && password === "saturjeff") {
+        document.getElementById("login-section").classList.add("hidden");
+        document.getElementById("form-section").classList.remove("hidden");
+      } else {
+        error.textContent = "Email atau password salah!";
+      }
+    }
+
+    document.getElementById("bookingForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const params = new URLSearchParams();
+      for (const [key, value] of formData.entries()) {
+        params.append(key, value);
+      }
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: params
+      })
+      .then(response => response.text())
+      .then(result => {
+        alert(result);
+        document.getElementById("bookingForm").reset();
+      })
+      .catch(err => {
+        document.getElementById("form-error").textContent = "Gagal mengirim data.";
+      });
+    });
+  </script>
+</body>
+</html>
