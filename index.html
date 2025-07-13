@@ -464,7 +464,16 @@ const SALES_LIST = [
   'zen', 'januar', 'nia', 'avro', 'mila', 'indra', 'hendra', 'irvan', 'rony', 'stevy', 'osla', 'imron', 'asep aj', 'nadia', 'daulat', 'other'
 ];
 
+function showLoading(text) {
+  document.getElementById('loadingText').textContent = text || 'MEMPROSES...';
+  document.getElementById('loadingIndicator').style.display = '';
+}
+function hideLoading() {
+  document.getElementById('loadingIndicator').style.display = 'none';
+}
+
 function loadRekapSales() {
+  showLoading('Memproses data rekap sales...');
   const selectedMonth = document.getElementById("rekap-sales-month").value;
   const selectedYear = document.getElementById("rekap-sales-year").value || new Date().getFullYear();
   
@@ -491,9 +500,11 @@ function loadRekapSales() {
       if (!document.getElementById('salesChartsContainer').classList.contains('hidden')) {
         updateSalesCharts(filtered);
       }
+      hideLoading();
     })
     .catch(err => {
       document.getElementById('rekapSalesTableContainer').innerHTML = `<p style='color:red'>Gagal memuat data: ${err}</p>`;
+      hideLoading();
     });
 }
 
@@ -547,6 +558,7 @@ function toggleOtherSalesInput(select, idx) {
 }
 
 function showCustomerInfo() {
+  showLoading('Memproses data info customer...');
   const selectedMonth = document.getElementById("rekap-sales-month").value;
   const selectedYear = document.getElementById("rekap-sales-year").value || new Date().getFullYear();
   const selectedSales = document.getElementById('customer-info-sales').value;
@@ -582,9 +594,11 @@ function showCustomerInfo() {
       html += '</tbody></table>';
       html += `<div style='margin-top:10px;'><strong>Total Data: ${filtered.length}</strong></div>`;
       document.getElementById('customerInfoTableContainer').innerHTML = html;
+      hideLoading();
     })
     .catch(err => {
       document.getElementById('customerInfoTableContainer').innerHTML = `<p style='color:red'>Gagal memuat data: ${err}</p>`;
+      hideLoading();
     });
 }
 
@@ -744,16 +758,18 @@ function getMonthName(monthNumber) {
 }
 
 function updateSalesRekapSpreadsheet() {
+  showLoading('Mengupdate data Sales Rekap...');
   const selectedMonth = document.getElementById("rekap-sales-month").value;
   const selectedYear = document.getElementById("rekap-sales-year").value || new Date().getFullYear();
   if (!selectedMonth || !selectedYear) {
     alert('Pilih bulan dan tahun terlebih dahulu!');
+    hideLoading();
     return;
   }
   if (!confirm('Yakin ingin mengupdate spreadsheet Sales Rekap untuk bulan ini?')) {
+    hideLoading();
     return;
   }
-  showLoading('MEMPROSES...');
   const params = new URLSearchParams();
   params.append("action", "update_sales_rekap");
   params.append("bulan", selectedMonth);
@@ -785,6 +801,7 @@ function showPage(id) {
   if (id === 'infoCustomerPage') {
     populateCustomerInfoSalesDropdown(); 
   }
+  hideLoading();
 }
 
 function checkLogin() {
@@ -879,8 +896,13 @@ document.getElementById("bookingForm").addEventListener("submit", function(e) {
 });
 
 function loadData() {
+  showLoading('Memproses data booking...');
   const tanggal = document.getElementById("filter-date").value;
-  if (!tanggal) return alert("Pilih tanggal dulu!");
+  if (!tanggal) {
+    alert("Pilih tanggal dulu!");
+    hideLoading();
+    return;
+  }
 
   fetch(`${URL}?tanggal_penerimaan=${tanggal}`)
     .then(res => res.json())
@@ -891,6 +913,7 @@ function loadData() {
       if (data.length === 0) {
         tbody.innerHTML = "<tr><td colspan='15'>Tidak ada data</td></tr>";
         document.getElementById("dataTable").classList.remove("hidden");
+        hideLoading();
         return;
       }
 
@@ -926,9 +949,11 @@ function loadData() {
       });
 
       document.getElementById("dataTable").classList.remove("hidden");
+      hideLoading();
     })
     .catch(err => {
       alert("Gagal memuat data: " + err);
+      hideLoading();
     });
 }
 
@@ -1044,11 +1069,13 @@ document.getElementById("mrsForm").addEventListener("submit", function(e) {
 });
 
 function loadMRSData() {
+  showLoading('Memproses data MRS...');
   const selectedMonth = document.getElementById("mrs-filter-month").value;
   const selectedYear = document.getElementById("mrs-filter-year").value || new Date().getFullYear();
   if (!selectedMonth || !selectedYear) {
     document.querySelector("#mrsTable tbody").innerHTML = "<tr><td colspan='7'>Pilih bulan dan tahun</td></tr>";
     document.getElementById("mrsTable").classList.remove("hidden");
+    hideLoading();
     return;
   }
   fetch(`${URL}?action=get_mrs_view&bulan=${selectedMonth}&tahun=${selectedYear}`)
@@ -1059,6 +1086,7 @@ function loadMRSData() {
       if (data.length === 0) {
         tbody.innerHTML = "<tr><td colspan='7'>Tidak ada data MRS</td></tr>";
         document.getElementById("mrsTable").classList.remove("hidden");
+        hideLoading();
         return;
       }
       data.forEach((row, idx) => {
@@ -1089,9 +1117,11 @@ function loadMRSData() {
         tbody.appendChild(tr);
       });
       document.getElementById("mrsTable").classList.remove("hidden");
+      hideLoading();
     })
     .catch(err => {
       alert("Gagal memuat data MRS: " + err);
+      hideLoading();
     });
 }
 
@@ -1233,8 +1263,13 @@ function deleteRow(id_row, tanggal, sheetName, btn) {
 }
 
 function loadRekap() {
+  showLoading('Memproses data rekap...');
   const tanggal = document.getElementById("rekap-filter-date").value;
-  if (!tanggal) return alert("Pilih tanggal dulu!");
+  if (!tanggal) {
+    alert("Pilih tanggal dulu!");
+    hideLoading();
+    return;
+  }
 
   fetch(`${URL}?tanggal_penerimaan=${tanggal}`)
     .then(res => res.json())
@@ -1247,6 +1282,7 @@ function loadRekap() {
         document.getElementById("rekapTable").classList.remove("hidden");
         document.getElementById("rekapSummary").classList.add("hidden");
         document.getElementById("exportBtn").classList.add("hidden");
+        hideLoading();
         return;
       }
 
@@ -1287,15 +1323,22 @@ function loadRekap() {
       document.getElementById("rekapTable").classList.remove("hidden");
       document.getElementById("rekapSummary").classList.remove("hidden");
       document.getElementById("exportBtn").classList.remove("hidden");
+      hideLoading();
     })
     .catch(err => {
       alert("Gagal memuat data rekap: " + err);
+      hideLoading();
     });
 }
 
 function exportRekapToSpreadsheet() {
+  showLoading('Mengekspor data rekap...');
   const tanggal = document.getElementById("rekap-filter-date").value;
-  if (!tanggal) return alert("Pilih tanggal dulu!");
+  if (!tanggal) {
+    alert("Pilih tanggal dulu!");
+    hideLoading();
+    return;
+  }
 
   const params = new URLSearchParams();
   params.append("action", "export_rekap");
@@ -1312,9 +1355,11 @@ function exportRekapToSpreadsheet() {
     .catch(err => {
       alert("Gagal export ke spreadsheet: " + err);
     });
+  hideLoading();
 }
 
 function loadMRSView() {
+  showLoading('Memproses data MRS View...');
   const bulan = document.getElementById("mrs-view-bulan").value;
   const tahun = document.getElementById("mrs-view-tahun").value;
   fetch(`${URL}?action=get_mrs_view&bulan=${bulan}&tahun=${tahun}`)
@@ -1325,6 +1370,7 @@ function loadMRSView() {
       if (data.length === 0) {
         tbody.innerHTML = "<tr><td colspan='7'>Tidak ada data MRS</td></tr>";
         document.getElementById("mrsViewTable").classList.remove("hidden");
+        hideLoading();
         return;
       }
       data.forEach((row, idx) => {
@@ -1357,9 +1403,11 @@ function loadMRSView() {
         tbody.appendChild(tr);
       });
       document.getElementById("mrsViewTable").classList.remove("hidden");
+      hideLoading();
     })
     .catch(err => {
       alert("Gagal memuat data MRS: " + err);
+      hideLoading();
     });
 }
 

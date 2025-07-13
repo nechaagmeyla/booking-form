@@ -1,0 +1,49 @@
+<div id="rekapSalesPage">
+  <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
+  <h3>Rekap Sales</h3>
+  <div style="margin: 20px 0;">
+    <label>Pilih Bulan: 
+      <select id="rekap-sales-month">
+        <option value="">Semua Bulan</option>
+        <option value="01">Januari</option>
+        <option value="02">Februari</option>
+        <option value="03">Maret</option>
+        <option value="04">April</option>
+        <option value="05">Mei</option>
+        <option value="06">Juni</option>
+        <option value="07">Juli</option>
+        <option value="08">Agustus</option>
+        <option value="09">September</option>
+        <option value="10">Oktober</option>
+        <option value="11">November</option>
+        <option value="12">Desember</option>
+      </select>
+    </label>
+    <label>Tahun: 
+      <input type="number" id="rekap-sales-year" min="2020" max="2100" value="2025" style="width:80px; margin-left:10px;" />
+    </label>
+    <div style="margin-top: 20px;">
+      <button onclick="loadRekapSales()" class="card-btn" style="margin: 10px;">VIEW REKAP</button>
+      <button onclick="showPage('infoCustomerPage')" class="card-btn" style="margin: 10px;">VIEW INFO CUSTOMER</button>
+      <button onclick="showSalesCharts()" class="card-btn" style="margin: 10px;">LIHAT GRAFIK</button>
+      <button onclick="updateSalesRekapSpreadsheet()" class="card-btn" style="margin: 10px; background: #28a745;">UPDATE SPREADSHEET</button>
+    </div>
+  </div>
+  <div id="rekapSalesTableContainer" class="table-responsive"></div>
+  <div id="salesChartsContainer" class="hidden" style="margin-top: 30px;">
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 300px;">
+        <h4>Pie Chart - Distribusi Sales</h4>
+        <canvas id="salesPieChart" width="400" height="400"></canvas>
+      </div>
+      <div style="flex: 1; min-width: 300px;">
+        <h4>Bar Chart - Perbandingan Sales</h4>
+        <canvas id="salesBarChart" width="400" height="400"></canvas>
+      </div>
+    </div>
+    <div id="salesSummary" style="margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 8px;">
+      <h4>Ringkasan</h4>
+      <div id="salesSummaryContent"></div>
+    </div>
+  </div>
+</div> 

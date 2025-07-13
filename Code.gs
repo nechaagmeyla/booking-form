@@ -384,6 +384,16 @@ function insertDataSortedByJam(sheet, newRow) {
   sheet.insertRowBefore(insertIndex);
   sheet.getRange(insertIndex, 1, 1, newRow.length).setValues([newRow]);
   updateRowNumbers(sheet);
+  // Setelah insert, urutkan ulang seluruh data berdasarkan jam penerimaan ascending
+  const allRows = sheet.getDataRange().getValues();
+  if (allRows.length > 2) {
+    const header = allRows[0];
+    const rows = allRows.slice(1);
+    rows.sort((a, b) => timeToMinutes(a[12]) - timeToMinutes(b[12]));
+    // Tulis ulang data (tanpa header)
+    sheet.getRange(2, 1, rows.length, header.length).setValues(rows);
+    updateRowNumbers(sheet);
+  }
 }
 
 function timeToMinutes(jamStr) {
