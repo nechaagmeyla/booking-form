@@ -1,111 +1,166 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Booking Kendaraan</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: linear-gradient(to right, #ff0000, #ffffff);
-      color: #333;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0; min-height: 100vh;
     }
     .container {
-      max-width: 600px;
-      background: #fff;
-      margin: 50px auto;
-      padding: 30px;
+      max-width: 700px; margin: 50px auto;
+      background: white; padding: 30px;
       border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    h2 {
-      text-align: center;
-      color: #b30000;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      font-weight: bold;
-    }
+    h2, h3 { text-align: center; color: #b30000; }
+    .form-group { margin-bottom: 15px; }
+    label { font-weight: bold; display: block; }
     input, select, textarea {
-      width: 100%;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      margin-top: 5px;
+      width: 100%; padding: 10px;
+      border: 1px solid #ccc; border-radius: 5px;
     }
     button {
-      background-color: #b30000;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 5px;
-      cursor: pointer;
+      padding: 10px 20px; border: none; border-radius: 5px;
+      background-color: #b30000; color: white;
+      cursor: pointer; font-size: 1rem;
+      margin: 5px 0; transition: background 0.2s;
+    }
+    button:hover { background-color: #800000; }
+    .hidden { display: none !important; }
+    .dashboard-menu {
+      display: flex; flex-wrap: wrap;
+      justify-content: center; gap: 30px;
+      margin: 40px 0;
+    }
+    .card-btn {
+      background: #fff; border: 2px solid #b30000;
+      color: #b30000; border-radius: 10px;
+      padding: 30px 40px; font-size: 1.2rem;
+      font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .card-btn:hover {
+      background: #b30000; color: #fff;
+      transform: translateY(-3px) scale(1.03);
+    }
+    .logout-btn {
+      float: right;
+      background: #ccc;
+      color: #b30000;
+      font-weight: bold;
+      margin-top: -20px;
+    }
+    table {
+      width: 100%; border-collapse: collapse; margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc; padding: 8px;
+      text-align: left;
+    }
+    th { background-color: #f2f2f2; }
+    .table-responsive {
       width: 100%;
+      overflow-x: auto;
     }
-    button:hover {
-      background-color: #800000;
-    }
-    .hidden {
-      display: none;
-    }
-    .error {
-      color: red;
-      font-size: 0.9em;
+    @media (max-width: 600px) {
+      .container { padding: 10px; }
+      .dashboard-menu { flex-direction: column; gap: 15px; }
+      .card-btn { width: 100%; padding: 20px 0; }
     }
   </style>
 </head>
 <body>
-  <div class="container" id="login-section">
-    <h2>Login Booking</h2>
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input type="email" id="email" required>
-    </div>
-    <div class="form-group">
-      <label for="password">Password</label>
-      <input type="password" id="password" required>
-    </div>
-    <button onclick="handleLogin()">Login</button>
-    <p class="error" id="login-error"></p>
+<div class="container">
+  <!-- LOGIN -->
+  <div id="loginPage">
+    <h2>Login Admin</h2>
+    <form id="loginForm">
+      <div class="form-group"><label>Email</label><input type="text" name="username" required></div>
+      <div class="form-group"><label>Password</label><input type="password" name="password" required></div>
+      <button type="submit">Login</button>
+    </form>
   </div>
 
-  <div class="container hidden" id="form-section">
-    <h2>Form Booking Kendaraan</h2>
+  <!-- DASHBOARD -->
+  <div id="dashboardPage" class="hidden">
+    <button class="logout-btn" onclick="logout()">Logout</button>
+    <h2>Dashboard</h2>
+    <div class="dashboard-menu">
+      <button class="card-btn" onclick="showNewBookingForm()">Booking Kendaraan</button>
+      <button class="card-btn" onclick="showPage('dataPage')">Data Booking</button>
+      <button class="card-btn" onclick="showPage('rekapPage')">Rekap Show/No Show/Reschedule</button>
+      <button class="card-btn" onclick="showPage('rekapSalesPage')">Rekap Sales</button>
+      <button class="card-btn" onclick="showPage('mrsPage')">MRS (Monthly Reminder System)</button>
+    </div>
+  </div>
+
+  <!-- FORM BOOKING -->
+  <div id="bookingPage" class="hidden">
+    <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
+    <h3>Form Booking</h3>
     <form id="bookingForm">
-      <div class="form-group">
-        <label>Nomor Polisi:</label>
-        <input type="text" name="plat" required>
+      <input type="hidden" name="editId" id="editId" />
+      <input type="hidden" name="sheetName" id="sheetName" />
+      <div class="form-group"><label>Nomor Polisi</label><input type="text" name="plat" required /></div>
+      <div class="form-group hidden" id="statusGroup">
+        <label>Status Kehadiran</label>
+        <select name="status_kehadiran" id="status_kehadiran_select">
+          <option value="show">show</option>
+          <option value="no show">no show</option>
+          <option value="reschedule">reschedule</option>
+        </select>
       </div>
+      <div class="form-group"><label>Tipe Kendaraan</label><input type="text" name="tipe" required /></div>
+      <div class="form-group"><label>Tahun</label><input type="text" name="tahun" required /></div>
       <div class="form-group">
-        <label>Tipe Kendaraan:</label>
-        <input type="text" name="tipe" required>
+        <label>Tipe Telepon</label>
+        <select name="tipe_telepon" id="tipe_telepon" required onchange="togglePhoneInput()">
+          <option value="">Pilih Tipe Telepon</option>
+          <option value="TELP">TELP</option>
+          <option value="SA">SA</option>
+        </select>
       </div>
-      <div class="form-group">
-        <label>Tahun Kendaraan:</label>
-        <input type="text" name="tahun" required>
+      <div class="form-group" id="phoneInputGroup">
+        <label>No HP</label>
+        <div style="display: flex; align-items: center;">
+          <span style="background: #f0f0f0; padding: 10px; border: 1px solid #ccc; border-right: none; border-radius: 5px 0 0 5px; color: #666;">62</span>
+          <input type="text" name="nohp" id="nohp_input" placeholder="81298292" style="border-radius: 0 5px 5px 0; border-left: none;" required />
+        </div>
       </div>
-      <div class="form-group">
-        <label>No HP:</label>
-        <input type="text" name="nohp" required>
+      <div class="form-group" id="saPhoneGroup" style="display: none;">
+        <label>SA</label>
+        <select name="nohp_sa" id="nohp_sa_select">
+          <option value="">Pilih SA</option>
+          <option value="DB">DB</option>
+          <option value="DM">DM</option>
+          <option value="DR">DR</option>
+          <option value="PS">PS</option>
+          <option value="RZ">RZ</option>
+        </select>
       </div>
-      <div class="form-group">
-        <label>Customer Akan Datang:</label>
-        <input type="text" name="datang" required>
+      <div class="form-group" id="customerDatangGroup">
+        <label>Customer Akan Datang</label>
+        <input type="text" name="datang" id="datang_input" placeholder="Nama customer yang akan datang" required />
       </div>
-      <div class="form-group">
-        <label>Nama Customer:</label>
-        <input type="text" name="nama" required>
+      <div class="form-group" id="customerDatangDropdown" style="display: none;">
+        <label>Customer Akan Datang</label>
+        <select name="datang_dropdown" id="datang_select">
+          <option value="">Pilih Customer</option>
+          <option value="DB">DB</option>
+          <option value="DM">DM</option>
+          <option value="DR">DR</option>
+          <option value="PS">PS</option>
+          <option value="RZ">RZ</option>
+        </select>
       </div>
-      <div class="form-group">
-        <label>Tanggal Penerimaan:</label>
-        <input type="date" name="tanggal_penerimaan" required>
-      </div>
-      <div class="form-group">
-        <label>VIA:</label>
+      <div class="form-group"><label>Nama Customer</label><input type="text" name="nama" required /></div>
+      <div class="form-group"><label>Tanggal Penerimaan</label><input type="date" name="tanggal_penerimaan" required /></div>
+      <div class="form-group"><label>Jam Penerimaan</label><input type="time" name="jam_penerimaan" required /></div>
+      <div class="form-group"><label>VIA</label>
         <select name="via" required>
           <option value="AW">AW</option>
           <option value="SA">SA</option>
@@ -114,64 +169,912 @@
           <option value="TLP">TLP</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Admin:</label>
+      <div class="form-group"><label>Admin</label>
         <select name="admin" required>
           <option value="Frenty">Frenty</option>
           <option value="Risa">Risa</option>
           <option value="AW">AW</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Jenis Pekerjaan:</label>
-        <textarea name="keluhan" required></textarea>
-      </div>
-      <div class="form-group">
-        <label>Nama Sales (opsional):</label>
-        <input type="text" name="sales">
-      </div>
-      <button type="submit">Kirim Booking</button>
-      <p class="error" id="form-error"></p>
+      <div class="form-group"><label>Jenis Pekerjaan</label><textarea name="keluhan" required></textarea></div>
+      <div class="form-group"><label>Nama Sales (Opsional)</label><input type="text" name="sales" /></div>
+      <button type="submit" id="submitBtn">Kirim</button>
     </form>
   </div>
 
-  <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxjIxOSx9CqB1ILMaIp4owvhFQzDhLEW_zWG-MvH67KDaNNPoG_Ij_z8mpxzkzeLS-4/exec"; // Ganti dengan URL Web App kamu
+  <!-- DATA -->
+  <div id="dataPage" class="hidden">
+    <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
+    <h3>Data Booking</h3>
+    <div>
+      <label>Filter Tanggal: <input type="date" id="filter-date" /></label>
+      <button onclick="loadData()">Lihat Data</button>
+    </div>
+    <div class="table-responsive">
+      <table id="dataTable" class="hidden">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Status</th>
+            <th>Plat</th>
+            <th>Tipe</th>
+            <th>Tahun</th>
+            <th>HP</th>
+            <th>Datang</th>
+            <th>Nama</th>
+            <th>Tanggal Booking</th>
+            <th>Tanggal Penerimaan</th>
+            <th>Jam Penerimaan</th>
+            <th>Via</th>
+            <th>Admin</th>
+            <th>Keluhan</th>
+            <th>Sales</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-    function handleLogin() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const error = document.getElementById("login-error");
+  <!-- REKAP -->
+  <div id="rekapPage" class="hidden">
+    <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
+    <h3>Rekap Show/No Show/Reschedule</h3>
+    <div>
+      <label>Filter Tanggal: <input type="date" id="rekap-filter-date" /></label>
+      <button onclick="loadRekap()">Lihat Rekap</button>
+      <button onclick="exportRekapToSpreadsheet()" id="exportBtn" class="hidden">Export ke Spreadsheet</button>
+    </div>
+    <div id="rekapSummary" class="hidden">
+      <h4>Ringkasan</h4>
+      <div style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
+        <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; min-width: 120px;">
+          <strong>Show:</strong> <span id="showCount">0</span>
+        </div>
+        <div style="background: #ffe8e8; padding: 15px; border-radius: 8px; min-width: 120px;">
+          <strong>No Show:</strong> <span id="noShowCount">0</span>
+        </div>
+        <div style="background: #fff3e8; padding: 15px; border-radius: 8px; min-width: 120px;">
+          <strong>Reschedule:</strong> <span id="rescheduleCount">0</span>
+        </div>
+        <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; min-width: 120px;">
+          <strong>Total:</strong> <span id="totalCount">0</span>
+        </div>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table id="rekapTable" class="hidden">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Status</th>
+            <th>Plat</th>
+            <th>Nama Customer</th>
+            <th>Tanggal Penerimaan</th>
+            <th>Jam Penerimaan</th>
+            <th>Via</th>
+            <th>Admin</th>
+            <th>Sales</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-      if (email === "agmeylanecha@gmail.com" && password === "saturjeff") {
-        document.getElementById("login-section").classList.add("hidden");
-        document.getElementById("form-section").classList.remove("hidden");
-      } else {
-        error.textContent = "Email atau password salah!";
-      }
-    }
+  <!-- REKAP SALES -->
+  <div id="rekapSalesPage" class="hidden">
+    <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
+    <h3>Rekap Sales</h3>
+    <div id="rekapSalesTableContainer" class="table-responsive"></div>
+  </div>
 
-    document.getElementById("bookingForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const params = new URLSearchParams();
-      for (const [key, value] of formData.entries()) {
-        params.append(key, value);
-      }
+  <!-- MRS (Monthly Reminder System) -->
+  <div id="mrsPage" class="hidden">
+    <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
+    <h3>MRS (Monthly Reminder System)</h3>
+    <div style="margin: 20px 0;">
+      <button onclick="showPage('mrsInputPage')" class="card-btn" style="margin: 10px;">Input MRS</button>
+      <button onclick="showPage('mrsViewPage')" class="card-btn" style="margin: 10px;">View MRS</button>
+    </div>
+  </div>
 
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: params
-      })
-      .then(response => response.text())
-      .then(result => {
-        alert(result);
-        document.getElementById("bookingForm").reset();
-      })
-      .catch(err => {
-        document.getElementById("form-error").textContent = "Gagal mengirim data.";
-      });
+  <!-- MRS INPUT -->
+  <div id="mrsInputPage" class="hidden">
+    <button onclick="showPage('mrsPage')">&larr; Kembali</button>
+    <h3>Input MRS</h3>
+    <form id="mrsForm">
+      <div class="form-group">
+        <label>Nomor Polisi</label>
+        <input type="text" name="plat_mrs" required />
+      </div>
+      <div class="form-group">
+        <label>Bulan</label>
+        <select name="reminder_month" id="reminder_month_select" required>
+          <option value="">Pilih Bulan</option>
+          <option value="Januari">Januari</option>
+          <option value="Februari">Februari</option>
+          <option value="Maret">Maret</option>
+          <option value="April">April</option>
+          <option value="Mei">Mei</option>
+          <option value="Juni">Juni</option>
+          <option value="Juli">Juli</option>
+          <option value="Agustus">Agustus</option>
+          <option value="September">September</option>
+          <option value="Oktober">Oktober</option>
+          <option value="November">November</option>
+          <option value="Desember">Desember</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>CH</label>
+        <input type="text" name="ch_mrs" required />
+      </div>
+      <div class="form-group">
+        <label>Nama Customer</label>
+        <input type="text" name="nama_customer_mrs" required />
+      </div>
+      <div class="form-group">
+        <label>No HP</label>
+        <div style="display: flex; align-items: center;">
+          <span style="background: #f0f0f0; padding: 10px; border: 1px solid #ccc; border-right: none; border-radius: 5px 0 0 5px; color: #666;">62</span>
+          <input type="text" name="nohp_mrs" id="nohp_mrs_input" placeholder="812xxxxxxx" style="border-radius: 0 5px 5px 0; border-left: none;" required />
+        </div>
+      </div>
+      <button type="submit">Simpan MRS</button>
+    </form>
+  </div>
+
+  <!-- MRS VIEW -->
+  <div id="mrsViewPage" class="hidden">
+    <button onclick="showPage('mrsPage')">&larr; Kembali</button>
+    <h3>View MRS</h3>
+    <div>
+      <label>Filter Bulan: 
+        <select id="mrs-filter-month" onchange="loadMRSData()">
+          <option value="">Semua Bulan</option>
+          <option value="Januari">Januari</option>
+          <option value="Februari">Februari</option>
+          <option value="Maret">Maret</option>
+          <option value="April">April</option>
+          <option value="Mei">Mei</option>
+          <option value="Juni">Juni</option>
+          <option value="Juli">Juli</option>
+          <option value="Agustus">Agustus</option>
+          <option value="September">September</option>
+          <option value="Oktober">Oktober</option>
+          <option value="November">November</option>
+          <option value="Desember">Desember</option>
+        </select>
+        <input type="number" id="mrs-filter-year" min="2020" max="2100" value="2025" style="width:80px; margin-left:10px;" onchange="loadMRSData()" />
+      </label>
+    </div>
+    <div class="table-responsive">
+      <table id="mrsTable" class="hidden">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nomor Polisi</th>
+            <th>Bulan</th>
+            <th>CH</th>
+            <th>Nama Customer</th>
+            <th>No HP</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- View MRS Section -->
+  <div id="mrsViewByMonthPage" class="hidden">
+    <button onclick="showPage('mrsPage')">&larr; Kembali</button>
+    <h3>View MRS per Bulan</h3>
+    <div>
+      <label>Bulan:
+        <select id="mrs-view-bulan">
+          <option value="Januari">Januari</option>
+          <option value="Februari">Februari</option>
+          <option value="Maret">Maret</option>
+          <option value="April">April</option>
+          <option value="Mei">Mei</option>
+          <option value="Juni">Juni</option>
+          <option value="Juli">Juli</option>
+          <option value="Agustus">Agustus</option>
+          <option value="September">September</option>
+          <option value="Oktober">Oktober</option>
+          <option value="November">November</option>
+          <option value="Desember">Desember</option>
+        </select>
+      </label>
+      <label>Tahun:
+        <input type="number" id="mrs-view-tahun" min="2020" max="2100" value="2025" style="width:80px;">
+      </label>
+      <button onclick="loadMRSView()">Lihat Data</button>
+    </div>
+    <div class="table-responsive">
+      <table id="mrsViewTable" class="hidden">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nomor Polisi</th>
+            <th>Bulan</th>
+            <th>CH</th>
+            <th>Nama Customer</th>
+            <th>No HP</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const URL = "https://script.google.com/macros/s/AKfycbwXbjjA_RSF1qcQSENYGBgQNdVQ7u2fxEiJJrNQNauzm0IcngXsKUf3HBnZL-SMEqzz/exec";
+
+function formatDateOnly(dateStr) {
+  if (!dateStr) return "";
+  if (dateStr instanceof Date) return dateStr.toISOString().split("T")[0];
+  if (typeof dateStr === "string" && dateStr.includes("T")) return dateStr.split("T")[0];
+  if (typeof dateStr === "string") return dateStr;
+  return "";
+}
+
+function formatJam(jamStr) {
+  if (!jamStr) return "";
+  // Jika format sudah HH:mm, langsung return
+  if (/^\d{1,2}:\d{2}$/.test(jamStr)) return jamStr;
+  // Jika format ISO, ambil jam dan menit
+  const date = new Date(jamStr);
+  if (isNaN(date.getTime())) return jamStr;
+  let hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // 0 jadi 12
+  return `${hours}:${minutes} ${ampm}`;
+}
+
+const SALES_LIST = [
+  'zen', 'januar', 'nia', 'avro', 'mila', 'indra', 'hendra', 'irvan', 'rony', 'stevy', 'osla', 'imron', 'asep aj', 'nadia', 'daulat', 'other'
+];
+
+function loadRekapSales() {
+  // Ambil semua data booking (bisa disesuaikan endpointnya)
+  fetch(`${URL}?action=get_all_booking`)
+    .then(res => res.json())
+    .then(data => {
+      // Filter hanya yang via = TAB
+      const filtered = data.filter(row => (row.via || '').toLowerCase() === 'tab');
+      renderRekapSalesTable(filtered);
+    })
+    .catch(err => {
+      document.getElementById('rekapSalesTableContainer').innerHTML = `<p style='color:red'>Gagal memuat data: ${err}</p>`;
     });
-  </script>
+}
+
+function renderRekapSalesTable(rows) {
+  let html = `<table><thead><tr>
+    <th>No</th>
+    <th>Nomor Polisi</th>
+    <th>Nama Customer</th>
+    <th>Tanggal Penerimaan</th>
+    <th>Jam Penerimaan</th>
+    <th>Nama Sales</th>
+  </tr></thead><tbody>`;
+  rows.forEach((row, idx) => {
+    const salesVal = row.nama_sales || row.sales || '';
+    html += `<tr>
+      <td>${idx + 1}</td>
+      <td>${row.nomor_polisi || row.plat || ''}</td>
+      <td>${row.nama_customer || row.nama || ''}</td>
+      <td>${row.tanggal_penerimaan || ''}</td>
+      <td>${row.jam_penerimaan || ''}</td>
+      <td>
+        <select onchange="toggleOtherSalesInput(this, ${idx})" data-idx="${idx}">
+          ${SALES_LIST.map(s => `<option value="${s}"${salesVal.toLowerCase() === s ? ' selected' : ''}>${s}</option>`).join('')}
+        </select>
+        <input type="text" class="other-sales-input" id="other-sales-${idx}" style="display:none;margin-top:4px;" placeholder="Nama Sales Lain" />
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('rekapSalesTableContainer').innerHTML = html;
+}
+
+function toggleOtherSalesInput(select, idx) {
+  const val = select.value;
+  const input = document.getElementById('other-sales-' + idx);
+  if (val === 'other') {
+    input.style.display = 'block';
+  } else {
+    input.style.display = 'none';
+    input.value = '';
+  }
+}
+
+function showPage(id) {
+  ["loginPage", "dashboardPage", "bookingPage", "dataPage", "rekapPage", "mrsPage", "mrsInputPage", "mrsViewPage", "mrsViewByMonthPage", "rekapSalesPage"].forEach(p => document.getElementById(p).classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+  if (id === 'rekapSalesPage') loadRekapSales();
+}
+
+function checkLogin() {
+  if (localStorage.getItem("isLoggedIn") === "true") {
+    showPage("dashboardPage");
+  } else {
+    showPage("loginPage");
+  }
+}
+
+function logout() {
+  localStorage.removeItem("isLoggedIn");
+  checkLogin();
+}
+
+document.getElementById("loginForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const username = e.target.username.value.trim();
+  const password = e.target.password.value.trim();
+  if (username === "agmeylanecha@gmail.com" && password === "saturjeff") {
+    localStorage.setItem("isLoggedIn", "true");
+    showPage("dashboardPage");
+    e.target.reset();
+  } else {
+    alert("Email atau password salah!");
+  }
+});
+
+document.getElementById("bookingForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+  const params = new URLSearchParams();
+  
+  // Handle phone number logic
+  const tipeTelepon = form.tipe_telepon.value;
+  if (tipeTelepon === "SA") {
+    // If SA is selected, use the SA dropdown value
+    formData.set("nohp", form.nohp_sa.value);
+    // Use dropdown value for customer datang
+    formData.set("datang", form.datang_dropdown.value);
+  } else {
+    // If TELP is selected, add "62" prefix to the phone number
+    const noHpInput = document.getElementById("nohp_input").value;
+    if (noHpInput) {
+      // Remove any existing "62" prefix and add it back
+      const cleanNumber = noHpInput.replace(/^62/, '');
+      formData.set("nohp", "62" + cleanNumber);
+    }
+    // Use text input value for customer datang
+    formData.set("datang", form.datang.value);
+  }
+  
+  formData.forEach((v, k) => params.append(k, v));
+
+  // Cek apakah ini edit atau tambah baru
+  const isEdit = form.editId.value !== "";
+  if (isEdit) {
+    params.append("id_row", form.editId.value);
+    params.append("sheetName", form.sheetName.value);
+    params.append("action", "edit");
+    // Tambahkan status hanya saat edit
+    params.append("status_kehadiran", document.getElementById("status_kehadiran_select").value);
+  }
+
+  fetch(URL, {
+    method: "POST",
+    body: params
+  })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      if (isEdit) {
+        // Jika edit, kembali ke halaman data dan refresh
+        document.getElementById("editId").value = "";
+        document.getElementById("sheetName").value = "";
+        showPage("dataPage");
+        loadData();
+      } else {
+        // Jika tambah baru, reset form dan tetap di halaman booking
+        form.reset();
+        // Reset phone input display
+        document.getElementById("phoneInputGroup").style.display = "none";
+        document.getElementById("saPhoneGroup").style.display = "none";
+      }
+    })
+    .catch(err => {
+      alert("Gagal menyimpan data: " + err);
+    });
+});
+
+function loadData() {
+  const tanggal = document.getElementById("filter-date").value;
+  if (!tanggal) return alert("Pilih tanggal dulu!");
+
+  fetch(`${URL}?tanggal_penerimaan=${tanggal}`)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.querySelector("#dataTable tbody");
+      tbody.innerHTML = "";
+
+      if (data.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='15'>Tidak ada data</td></tr>";
+        document.getElementById("dataTable").classList.remove("hidden");
+        return;
+      }
+
+      data.forEach((row, idx) => {
+        // Penyesuaian field sesuai header
+        const status = row.status_kehadiran || "";
+        const displayStatus = status || "-"; // Tampilkan "-" jika kosong
+        
+        const tds = `
+          <td>${idx + 1}</td>
+          <td>${displayStatus}</td>
+          <td>${row.nomor_polisi || row.plat || ""}</td>
+          <td>${row.tipe_kendaraan || row.tipe || ""}</td>
+          <td>${row.tahun || ""}</td>
+          <td>${row.no_hp || row.nohp || ""}</td>
+          <td>${row.customer_akan_datang || row.datang || ""}</td>
+          <td>${row.nama_customer || row.nama || ""}</td>
+          <td>${formatDateOnly(row.tanggal_booking)}</td>
+          <td>${formatDateOnly(row.tanggal_penerimaan)}</td>
+          <td>${formatJam(row.jam_penerimaan || "")}</td>
+          <td>${row.via || ""}</td>
+          <td>${row.admin || ""}</td>
+          <td>${row.jenis_pekerjaan || row.keluhan || ""}</td>
+          <td>${row.nama_sales || row.sales || ""}</td>
+          <td>
+            <button onclick='editRow(${JSON.stringify(row)})'>Edit</button>
+            <button onclick='deleteRow("${row.id_row}", "${row.tanggal_penerimaan}", "${row.sheetName}", this)'>Hapus</button>
+          </td>
+        `;
+        const tr = document.createElement("tr");
+        tr.innerHTML = tds;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("dataTable").classList.remove("hidden");
+    })
+    .catch(err => {
+      alert("Gagal memuat data: " + err);
+    });
+}
+
+
+function showNewBookingForm() {
+  showPage("bookingPage");
+  const form = document.getElementById("bookingForm");
+  form.reset();
+  document.getElementById("editId").value = "";
+  document.getElementById("sheetName").value = "";
+  document.getElementById("submitBtn").textContent = "Kirim";
+  document.getElementById("statusGroup").classList.add("hidden");
+  document.getElementById("tipe_telepon").value = "";
+  document.getElementById("phoneInputGroup").style.display = "none";
+  document.getElementById("saPhoneGroup").style.display = "none";
+  document.getElementById("customerDatangGroup").style.display = "block";
+  document.getElementById("customerDatangDropdown").style.display = "none";
+  document.getElementById("datang_input").value = "";
+  document.getElementById("datang_select").value = "";
+}
+
+function togglePhoneInput() {
+  const tipeTelepon = document.getElementById("tipe_telepon").value;
+  if (tipeTelepon === "SA") {
+    document.getElementById("phoneInputGroup").style.display = "none";
+    document.getElementById("saPhoneGroup").style.display = "block";
+    document.getElementById("customerDatangGroup").style.display = "none";
+    document.getElementById("customerDatangDropdown").style.display = "block";
+  } else {
+    document.getElementById("phoneInputGroup").style.display = "block";
+    document.getElementById("saPhoneGroup").style.display = "none";
+    document.getElementById("customerDatangGroup").style.display = "block";
+    document.getElementById("customerDatangDropdown").style.display = "none";
+  }
+}
+
+// Function to format phone number input
+function formatPhoneNumber(input) {
+  let value = input.value.replace(/\D/g, ''); // Remove non-digits
+  
+  // Remove "62" if user tries to type it
+  if (value.startsWith('62')) {
+    value = value.substring(2);
+  }
+  
+  // Limit to reasonable length (max 12 digits after removing 62)
+  if (value.length > 12) {
+    value = value.substring(0, 12);
+  }
+  
+  input.value = value;
+}
+
+// Add event listener to phone input
+document.addEventListener('DOMContentLoaded', function() {
+  const phoneInput = document.getElementById('nohp_input');
+  if (phoneInput) {
+    phoneInput.addEventListener('input', function() {
+      formatPhoneNumber(this);
+    });
+    
+    // Prevent paste of numbers starting with 62
+    phoneInput.addEventListener('paste', function(e) {
+      e.preventDefault();
+      const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+      let cleanText = pastedText.replace(/\D/g, '');
+      if (cleanText.startsWith('62')) {
+        cleanText = cleanText.substring(2);
+      }
+      if (cleanText.length > 12) {
+        cleanText = cleanText.substring(0, 12);
+      }
+      this.value = cleanText;
+    });
+  }
+  
+  // Set current month as default in MRS form
+  const currentMonth = new Date().toLocaleString('id-ID', { month: 'long' });
+  const reminderMonthSelect = document.querySelector('select[name="reminder_month"]');
+  if (reminderMonthSelect) {
+    reminderMonthSelect.value = currentMonth;
+  }
+});
+
+// MRS Form Submission
+document.getElementById("mrsForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+  const params = new URLSearchParams();
+  // Otomatis prefix 62
+  let nohp = form.nohp_mrs.value.replace(/\D/g, '');
+  if (nohp.startsWith('62')) nohp = nohp.substring(2);
+  params.append("nohp_mrs", "62" + nohp);
+  formData.forEach((v, k) => {
+    if (k !== "nohp_mrs") params.append(k, v);
+  });
+  params.append("action", "add_mrs");
+
+  fetch(URL, {
+    method: "POST",
+    body: params
+  })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      form.reset();
+      document.getElementById("reminder_month_select").value = new Date().toLocaleString('id-ID', { month: 'long' });
+    })
+    .catch(err => {
+      alert("Gagal menyimpan data MRS: " + err);
+    });
+});
+
+function loadMRSData() {
+  const selectedMonth = document.getElementById("mrs-filter-month").value;
+  const selectedYear = document.getElementById("mrs-filter-year").value || new Date().getFullYear();
+  if (!selectedMonth || !selectedYear) {
+    document.querySelector("#mrsTable tbody").innerHTML = "<tr><td colspan='7'>Pilih bulan dan tahun</td></tr>";
+    document.getElementById("mrsTable").classList.remove("hidden");
+    return;
+  }
+  fetch(`${URL}?action=get_mrs_view&bulan=${selectedMonth}&tahun=${selectedYear}`)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.querySelector("#mrsTable tbody");
+      tbody.innerHTML = "";
+      if (data.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='7'>Tidak ada data MRS</td></tr>";
+        document.getElementById("mrsTable").classList.remove("hidden");
+        return;
+      }
+      data.forEach((row, idx) => {
+        const waNumber = row.no_hp || "";
+        const pesan =
+`Yth. Bapak/Ibu ${row.nama_customer || ''}\nKami mengingatkan untuk kendaraan ${row.nomor_polisi || ''} sudah waktunya service berkala (${row.ch || ''}) atau 6 bulan setelah service kendaraan\n\nApakah Bapak/Ibu bersedia kami booking kan di Bulan ${row.bulan || ''} ${selectedYear}?\n\nBOOKING Maksimal H-2 / H-1 sebelum service\n\nAbaikan pesan ini jika sudah melakukan service\n\nKami pun memiliki layanan THS - Auto2000 Home Service yang dapat melakukan service di tempat anda (rumah/kantor, dsb). \n\nCintai Keluarga dan Kendaraan Anda!\n\nHotline : 022-602.2000 / 6010010\n\nSenin - Jum'at : 08.00 s/d 16.00\nSabtu : 08.00 s/d 13:00\nHari Minggu dan hari besar operasional booking service Libur.\n\nJl. Soekarno Hatta No. 145 Bandung ( Caringin )`;
+        const waLinkApp = `https://wa.me/${waNumber}?text=${encodeURIComponent(pesan)}`;
+        const waLinkWeb = `https://web.whatsapp.com/send?phone=${waNumber}&text=${encodeURIComponent(pesan)}`;
+        const tds = `
+          <td>${idx + 1}</td>
+          <td>${row.nomor_polisi || ""}</td>
+          <td>${row.bulan || ""}</td>
+          <td>${row.ch || ""}</td>
+          <td>${row.nama_customer || ""}</td>
+          <td>${waNumber}</td>
+          <td>
+            <button onclick='deleteMRS("${row.id_row}", this)'>Hapus</button>
+            <a href="${waLinkApp}" target="_blank" title="Kirim via WhatsApp App">
+              <img src='https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg' alt='WA App' style='width:24px;height:24px;vertical-align:middle;'>
+            </a>
+            <a href="${waLinkWeb}" target="_blank" title="Kirim via WhatsApp Web">
+              <img src='https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg' alt='WA Web' style='width:24px;height:24px;vertical-align:middle;filter: grayscale(100%) brightness(0.7);'>
+            </a>
+          </td>
+        `;
+        const tr = document.createElement("tr");
+        tr.innerHTML = tds;
+        tbody.appendChild(tr);
+      });
+      document.getElementById("mrsTable").classList.remove("hidden");
+    })
+    .catch(err => {
+      alert("Gagal memuat data MRS: " + err);
+    });
+}
+
+function deleteMRS(id_row, btn) {
+  if (!confirm("Yakin ingin hapus data MRS ini?")) return;
+  
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Menghapus...";
+  }
+  
+  const params = new URLSearchParams();
+  params.append("action", "delete_mrs");
+  params.append("id_row", id_row);
+
+  fetch(URL, {
+    method: "POST",
+    body: params
+  })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      loadMRSData();
+    })
+    .catch(err => {
+      alert("Gagal menghapus data MRS: " + err);
+    })
+    .finally(() => {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Hapus";
+      }
+    });
+}
+
+function editRow(row) {
+  showPage("bookingPage");
+  const form = document.getElementById("bookingForm");
+  form.plat.value = row.nomor_polisi || "";
+  document.getElementById("statusGroup").classList.remove("hidden");
+  document.getElementById("status_kehadiran_select").value = row.status_kehadiran || "show";
+  form.tipe.value = row.tipe_kendaraan || "";
+  form.tahun.value = row.tahun || "";
+  
+  // Handle tipe telepon and phone number
+  const tipeTelepon = row.tipe_telepon || "";
+  form.tipe_telepon.value = tipeTelepon;
+  if (tipeTelepon === "SA") {
+    document.getElementById("phoneInputGroup").style.display = "none";
+    document.getElementById("saPhoneGroup").style.display = "block";
+    document.getElementById("nohp_sa_select").value = row.no_hp || row.nohp || "";
+    document.getElementById("nohp_input").value = "";
+    
+    // Show dropdown for customer datang when SA is selected
+    document.getElementById("customerDatangGroup").style.display = "none";
+    document.getElementById("customerDatangDropdown").style.display = "block";
+    document.getElementById("datang_select").value = row.customer_akan_datang || row.datang || "";
+    document.getElementById("datang_input").value = "";
+  } else {
+    document.getElementById("phoneInputGroup").style.display = "block";
+    document.getElementById("saPhoneGroup").style.display = "none";
+    // Remove "62" prefix for display in input field
+    const phoneNumber = row.no_hp || row.nohp || "";
+    const displayNumber = phoneNumber.startsWith("62") ? phoneNumber.substring(2) : phoneNumber;
+    document.getElementById("nohp_input").value = displayNumber;
+    document.getElementById("nohp_sa_select").value = "";
+    
+    // Show text input for customer datang when TELP is selected
+    document.getElementById("customerDatangGroup").style.display = "block";
+    document.getElementById("customerDatangDropdown").style.display = "none";
+    document.getElementById("datang_input").value = row.customer_akan_datang || row.datang || "";
+    document.getElementById("datang_select").value = "";
+  }
+  
+  // Handle customer datang dropdown - removed this section since it's now handled above
+  
+  form.nama.value = row.nama_customer || "";
+  form.tanggal_penerimaan.value = row.tanggal_penerimaan || "";
+  form.jam_penerimaan.value = row.jam_penerimaan || "";
+  form.via.value = row.via || "";
+  form.admin.value = row.admin || "";
+  form.keluhan.value = row.jenis_pekerjaan || "";
+  form.sales.value = row.nama_sales || "";
+
+  document.getElementById("editId").value = row.id_row;
+  document.getElementById("sheetName").value = row.sheetName;
+  document.getElementById("submitBtn").textContent = "Update Data";
+}
+
+
+function deleteRow(id_row, tanggal, sheetName, btn) {
+  if (!confirm("Yakin ingin hapus data ini?")) return;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Menghapus...";
+  }
+  const params = new URLSearchParams();
+  params.append("id_row", id_row);
+  params.append("tanggal_penerimaan", tanggal);
+  params.append("sheetName", sheetName);
+  params.append("action", "delete");
+
+  fetch(URL, {
+    method: "POST",
+    body: params
+  })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      loadData();
+    })
+    .catch(err => {
+      alert("Gagal menghapus data: " + err);
+    })
+    .finally(() => {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Hapus";
+      }
+    });
+}
+
+function loadRekap() {
+  const tanggal = document.getElementById("rekap-filter-date").value;
+  if (!tanggal) return alert("Pilih tanggal dulu!");
+
+  fetch(`${URL}?tanggal_penerimaan=${tanggal}`)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.querySelector("#rekapTable tbody");
+      tbody.innerHTML = "";
+
+      if (data.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='9'>Tidak ada data</td></tr>";
+        document.getElementById("rekapTable").classList.remove("hidden");
+        document.getElementById("rekapSummary").classList.add("hidden");
+        document.getElementById("exportBtn").classList.add("hidden");
+        return;
+      }
+
+      // Hitung statistik
+      let showCount = 0, noShowCount = 0, rescheduleCount = 0, unknownCount = 0;
+      
+      data.forEach((row, idx) => {
+        const status = row.status_kehadiran || "";
+        if (status === "show") showCount++;
+        else if (status === "no show") noShowCount++;
+        else if (status === "reschedule") rescheduleCount++;
+        else unknownCount++; // Untuk status kosong atau tidak diketahui
+
+        const displayStatus = status || "-"; // Tampilkan "-" jika kosong
+
+        const tds = `
+          <td>${idx + 1}</td>
+          <td>${displayStatus}</td>
+          <td>${row.nomor_polisi || row.plat || ""}</td>
+          <td>${row.nama_customer || row.nama || ""}</td>
+          <td>${formatDateOnly(row.tanggal_penerimaan)}</td>
+          <td>${formatJam(row.jam_penerimaan || "")}</td>
+          <td>${row.via || ""}</td>
+          <td>${row.admin || ""}</td>
+          <td>${row.nama_sales || row.sales || ""}</td>
+        `;
+        const tr = document.createElement("tr");
+        tr.innerHTML = tds;
+        tbody.appendChild(tr);
+      });
+
+      // Update ringkasan
+      document.getElementById("showCount").textContent = showCount;
+      document.getElementById("noShowCount").textContent = noShowCount;
+      document.getElementById("rescheduleCount").textContent = rescheduleCount;
+      document.getElementById("totalCount").textContent = data.length;
+
+      document.getElementById("rekapTable").classList.remove("hidden");
+      document.getElementById("rekapSummary").classList.remove("hidden");
+      document.getElementById("exportBtn").classList.remove("hidden");
+    })
+    .catch(err => {
+      alert("Gagal memuat data rekap: " + err);
+    });
+}
+
+function exportRekapToSpreadsheet() {
+  const tanggal = document.getElementById("rekap-filter-date").value;
+  if (!tanggal) return alert("Pilih tanggal dulu!");
+
+  const params = new URLSearchParams();
+  params.append("action", "export_rekap");
+  params.append("tanggal_penerimaan", tanggal);
+
+  fetch(URL, {
+    method: "POST",
+    body: params
+  })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+    })
+    .catch(err => {
+      alert("Gagal export ke spreadsheet: " + err);
+    });
+}
+
+function loadMRSView() {
+  const bulan = document.getElementById("mrs-view-bulan").value;
+  const tahun = document.getElementById("mrs-view-tahun").value;
+  fetch(`${URL}?action=get_mrs_view&bulan=${bulan}&tahun=${tahun}`)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.querySelector("#mrsViewTable tbody");
+      tbody.innerHTML = "";
+      if (data.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='7'>Tidak ada data MRS</td></tr>";
+        document.getElementById("mrsViewTable").classList.remove("hidden");
+        return;
+      }
+      data.forEach((row, idx) => {
+        const ch = row.ch || "";
+        const namaCustomer = row.nama_customer || "";
+        const waNumber = row.no_hp || "";
+        const pesan =
+`Yth. Bapak/Ibu ${namaCustomer}\nKami mengingatkan untuk kendaraan ${row.nomor_polisi || ""} sudah waktunya service berkala (${ch}) atau 6 bulan setelah service kendaraan\n\nApakah Bapak/Ibu bersedia kami booking kan di Bulan ${row.bulan || ""} ${tahun}?\n\nBOOKING Maksimal H-2 / H-1 sebelum service\n\nAbaikan pesan ini jika sudah melakukan service\n\nKami pun memiliki layanan THS - Auto2000 Home Service yang dapat melakukan service di tempat anda (rumah/kantor, dsb). \n\nCintai Keluarga dan Kendaraan Anda!\n\nHotline : 022-602.2000 / 6010010\n\nSenin - Jum'at : 08.00 s/d 16.00\nSabtu : 08.00 s/d 13:00\nHari Minggu dan hari besar operasional booking service Libur.\n\nJl. Soekarno Hatta No. 145 Bandung ( Caringin )`;
+        const waLinkApp = `https://wa.me/${waNumber}?text=${encodeURIComponent(pesan)}`;
+        const waLinkWeb = `https://web.whatsapp.com/send?phone=${waNumber}&text=${encodeURIComponent(pesan)}`;
+        const tds = `
+          <td>${idx + 1}</td>
+          <td>${row.nomor_polisi || ""}</td>
+          <td>${row.bulan || ""}</td>
+          <td>${ch}</td>
+          <td>${namaCustomer}</td>
+          <td>${waNumber}</td>
+          <td>
+            <button onclick="deleteMRSView(${idx})" title="Hapus" style="background:#b30000;color:white;border:none;padding:6px 12px;border-radius:5px;">Hapus</button>
+            <a href="${waLinkApp}" target="_blank" title="Kirim via WhatsApp App">
+              <img src='https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg' alt='WA App' style='width:24px;height:24px;vertical-align:middle;'>
+            </a>
+            <a href="${waLinkWeb}" target="_blank" title="Kirim via WhatsApp Web">
+              <img src='https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg' alt='WA Web' style='width:24px;height:24px;vertical-align:middle;filter: grayscale(100%) brightness(0.7);'>
+            </a>
+          </td>
+        `;
+        const tr = document.createElement("tr");
+        tr.innerHTML = tds;
+        tbody.appendChild(tr);
+      });
+      document.getElementById("mrsViewTable").classList.remove("hidden");
+    })
+    .catch(err => {
+      alert("Gagal memuat data MRS: " + err);
+    });
+}
+
+function sendWhatsApp(waNumber, pesan) {
+  if (confirm("Pastikan nomor sudah terdaftar di WhatsApp. Lanjutkan kirim pesan?")) {
+    const waLink = `https://wa.me/${waNumber}?text=${pesan}`;
+    window.open(waLink, '_blank');
+  }
+}
+
+function editMRS(idx) {
+  alert('Fitur edit MRS belum diimplementasikan. Index data: ' + idx);
+}
+
+function deleteMRSView(idx) {
+  alert('Fitur hapus MRS dari View belum diimplementasikan. Index data: ' + idx);
+}
+
+window.onload = checkLogin;
+</script>
 </body>
 </html>
