@@ -5,15 +5,18 @@
 //   return email === "agmeylanecha@gmail.com";
 // }
 
+// SALES_LIST: Daftar sales yang valid untuk normalisasi dan rekap
+const SALES_LIST = [
+  'zen', 'januar', 'nia', 'avro', 'mila', 'indra', 'hendra', 'irvan', 'rony', 'stevy', 'osla', 'imron', 'asep aj', 'nadia', 'daulat', 'other'
+];
+
 function doGet(e) {
   const action = e.parameter.action;
   if (action === "get_mrs_view") return doGetMRSView(e);
+  if (action === "get_mrs") return doGetMRS(e);
+  if (action === "get_all_booking") return doGetAllBooking(e);
   
   const tanggal = e.parameter.tanggal_penerimaan;
-  
-  if (action === "get_mrs") {
-    return doGetMRS(e);
-  }
   
   if (!tanggal) return ContentService.createTextOutput("❌ Tanggal kosong");
 
@@ -138,21 +141,50 @@ function doGetMRS(e) {
 
 function doPost(e) {
   const p = e.parameter;
-  
   // Handle different actions
   if (p.action === "delete") return doDelete(e);
   if (p.action === "edit") return doEdit(e);
   if (p.action === "export_rekap") return doExportRekap(e);
   if (p.action === "add_mrs") return doAddMRSV3(e);
   if (p.action === "delete_mrs") return doDeleteMRS(e);
-  
-  // Default action: add new booking
+  if (p.action === "update_sales_rekap") return ContentService.createTextOutput(updateRekapSalesSheet(p));
+  if (p.action === "export_rekap_sales") return ContentService.createTextOutput(exportRekapSalesSheet(p));
+
+  // === TAMBAH BOOKING ===
   const tglBooking = formatTanggalLengkap(new Date());
   const sheet = getOrCreateSheet(p.tanggal_penerimaan);
   const idRow = `${Date.now()}_${p.plat}`;
+
+  // Normalisasi sales
+  let salesVal = (p.sales || "").toString().trim().toLowerCase();
+  if (!SALES_LIST.includes(salesVal) && salesVal !== "") {
+    salesVal = p.sales; // biarkan sesuai input user (other)
+  }
+
+  // === LOGIKA NO HP & CUSTOMER AKAN DATANG ===
+  let nohp = "";
+  let datang = "";
+  if ((p.tipe_telepon || "").toUpperCase() === "SA") {
+    // Jika tipe telepon SA, No HP dan Customer Akan Datang = kode SA (RZ, PS, DB, DM, DR)
+    nohp = p.nohp_sa || "";
+    datang = p.datang_dropdown || "";
+  } else {
+    // Jika tipe telepon TELP, No HP = nomor HP (dengan prefix 62, tanpa label), Customer Akan Datang = input user
+    let hp = (p.nohp || "").replace(/\D/g, "");
+    if (hp.startsWith("62")) hp = hp.substring(2);
+    if (hp.length > 0) {
+      nohp = "62" + hp;
+    } else {
+      nohp = "";
+    }
+    datang = p.datang || "";
+  }
+
+  // Status Kehadiran harus selalu kosong saat tambah booking
+  const statusKehadiran = "";
   const newRow = [
-    idRow, "", p.status_kehadiran || "", p.plat, p.tipe, p.tahun, p.tipe_telepon || "", p.nohp, p.datang, p.nama,
-    tglBooking, p.tanggal_penerimaan, p.jam_penerimaan, p.via, p.admin, p.keluhan, p.sales || ""
+    idRow, "", statusKehadiran, p.plat, p.tipe, p.tahun, p.tipe_telepon || "", nohp, datang, p.nama,
+    tglBooking, p.tanggal_penerimaan, p.jam_penerimaan, p.via, p.admin, p.keluhan, salesVal
   ];
   insertDataSortedByJam(sheet, newRow);
   return ContentService.createTextOutput("✅ Data berhasil ditambahkan.");
@@ -162,20 +194,39 @@ function doEdit(e) {
   const p = e.parameter;
   const sheet = getSheetBySheetName(p.tanggal_penerimaan, p.sheetName);
   if (!sheet) return ContentService.createTextOutput("❌ Sheet tidak ditemukan");
-  
   const data = sheet.getDataRange().getValues();
   const rowIdx = data.findIndex(row => row[0] === p.id_row);
   if (rowIdx === -1) return ContentService.createTextOutput("❌ Data tidak ditemukan");
-
   const tglBooking = formatTanggalLengkap(new Date());
+  // Normalisasi sales
+  let salesVal = (p.sales || "").toString().trim().toLowerCase();
+  if (!SALES_LIST.includes(salesVal) && salesVal !== "") {
+    salesVal = p.sales;
+  }
+  // === LOGIKA NO HP & CUSTOMER AKAN DATANG (sama seperti tambah) ===
+  let nohp = "";
+  let datang = "";
+  if ((p.tipe_telepon || "").toUpperCase() === "SA") {
+    nohp = p.nohp_sa || "";
+    datang = p.datang_dropdown || "";
+  } else {
+    let hp = (p.nohp || "").replace(/\D/g, "");
+    if (hp.startsWith("62")) hp = hp.substring(2);
+    if (hp.length > 0) {
+      nohp = "62" + hp;
+    } else {
+      nohp = "";
+    }
+    datang = p.datang || "";
+  }
+  // Status Kehadiran boleh diisi saat edit
+  const statusKehadiran = p.status_kehadiran || "";
   const updateRow = [
-    p.id_row, "", p.status_kehadiran || "", p.plat, p.tipe, p.tahun, p.tipe_telepon || "", p.nohp, p.datang, p.nama,
-    tglBooking, p.tanggal_penerimaan, p.jam_penerimaan, p.via, p.admin, p.keluhan, p.sales || ""
+    p.id_row, "", statusKehadiran, p.plat, p.tipe, p.tahun, p.tipe_telepon || "", nohp, datang, p.nama,
+    tglBooking, p.tanggal_penerimaan, p.jam_penerimaan, p.via, p.admin, p.keluhan, salesVal
   ];
-
   sheet.deleteRow(rowIdx + 1);
   insertDataSortedByJam(sheet, updateRow);
-
   return ContentService.createTextOutput("✅ Data berhasil diupdate.");
 }
 
@@ -317,18 +368,18 @@ function doExportRekap(e) {
 
 function insertDataSortedByJam(sheet, newRow) {
   const allData = sheet.getDataRange().getValues();
-  const dataRows = allData.slice(1);
-  const jamBaru = timeToMinutes(newRow[11]);
+  const dataRows = allData.slice(1); // skip header
+  const jamBaru = timeToMinutes(newRow[12]); // kolom ke-13: Jam Penerimaan
 
-  let insertIndex = dataRows.length + 1;
+  let insertIndex = dataRows.length + 1; // default: paling bawah
   for (let i = 0; i < dataRows.length; i++) {
-    const jamLama = timeToMinutes(dataRows[i][11]);
-    if (jamBaru < jamLama) {
-      insertIndex = i + 2;
+    const jamLama = timeToMinutes(dataRows[i][12]); // kolom ke-13: Jam Penerimaan
+    // Jika jamBaru valid dan lebih kecil dari jamLama, sisipkan di sini
+    if (jamBaru > 0 && (jamLama === 0 || jamBaru < jamLama)) {
+      insertIndex = i + 2; // +2 karena header
       break;
     }
   }
-
   if (insertIndex === 1) insertIndex = 2;
   sheet.insertRowBefore(insertIndex);
   sheet.getRange(insertIndex, 1, 1, newRow.length).setValues([newRow]);
@@ -338,11 +389,11 @@ function insertDataSortedByJam(sheet, newRow) {
 function timeToMinutes(jamStr) {
   if (!jamStr) return 0;
   if (jamStr instanceof Date) return jamStr.getHours() * 60 + jamStr.getMinutes();
-
-  const parts = jamStr.toString().split(":");
-  if (parts.length >= 2) {
-    const jam = parseInt(parts[0], 10);
-    const menit = parseInt(parts[1], 10);
+  // Ambil hanya bagian jam dan menit (misal: '7:00', '09:00', '10:00')
+  const match = jamStr.match(/^(\d{1,2}):(\d{2})/);
+  if (match) {
+    const jam = parseInt(match[1], 10);
+    const menit = parseInt(match[2], 10);
     if (!isNaN(jam) && !isNaN(menit)) return jam * 60 + menit;
   }
   return 0;
@@ -375,13 +426,31 @@ function getOrCreateSheet(tanggal) {
   }
 
   let sheet = spreadsheet.getSheetByName(tanggal);
+  const correctHeader = [
+    "ID_ROW", "No", "Status Kehadiran", "Nomor Polisi", "Tipe Kendaraan", "Tahun", "Tipe Telepon", "No HP",
+    "Customer Akan Datang", "Nama Customer", "Tanggal Booking",
+    "Tanggal Penerimaan", "Jam Penerimaan", "VIA", "Admin", "Jenis Pekerjaan", "Nama Sales"
+  ];
   if (!sheet) {
     sheet = spreadsheet.insertSheet(tanggal);
-    sheet.appendRow([
-      "ID_ROW", "No", "Status Kehadiran", "Nomor Polisi", "Tipe Kendaraan", "Tahun", "Tipe Telepon", "No HP",
-      "Customer Akan Datang", "Nama Customer", "Tanggal Booking",
-      "Tanggal Penerimaan", "Jam Penerimaan", "VIA", "Admin", "Jenis Pekerjaan", "Nama Sales"
-    ]);
+    sheet.appendRow(correctHeader);
+  } else {
+    // Jika header sheet lama belum ada kolom 'Tipe Telepon', update header dan sisipkan kolom
+    const header = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    if (header.length < correctHeader.length || header[6] !== "Tipe Telepon") {
+      // Sisipkan kolom ke-7 (setelah Tahun)
+      sheet.insertColumnAfter(6);
+      sheet.getRange(1, 7).setValue("Tipe Telepon");
+      // Geser data lama ke kanan jika perlu
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        sheet.getRange(2, 7, lastRow - 1, 1).setValue("");
+      }
+      // Update header lain jika perlu
+      for (var i = 0; i < correctHeader.length; i++) {
+        sheet.getRange(1, i + 1).setValue(correctHeader[i]);
+      }
+    }
   }
   return sheet;
 }
@@ -518,4 +587,343 @@ function getMRSSpreadsheet() {
   sheet.autoResizeColumns(1, 6);
   
   return ss;
+}
+
+function doGetAllBooking(e) {
+  try {
+    const allBookings = getAllBookingData();
+    return ContentService.createTextOutput(JSON.stringify(allBookings)).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getAllBookingData() {
+  const parentId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1";
+  const parent = DriveApp.getFolderById(parentId);
+  const allBookings = [];
+  // Ambil semua folder Booking_YYYY_MM
+  const folders = parent.getFolders();
+  while (folders.hasNext()) {
+    const folder = folders.next();
+    const folderName = folder.getName();
+    if (folderName.startsWith('Booking_')) {
+      const files = folder.getFilesByName(folderName);
+      if (files.hasNext()) {
+        const ss = SpreadsheetApp.open(files.next());
+        const sheets = ss.getSheets();
+        for (let i = 0; i < sheets.length; i++) {
+          const sheet = sheets[i];
+          const sheetName = sheet.getName();
+          // Skip MRS sheets dan sheet kosong
+          if (sheetName.startsWith('MRS_') || sheet.getLastRow() <= 1) continue;
+          const data = sheet.getDataRange().getValues();
+          const headers = data[0];
+          for (let j = 1; j < data.length; j++) {
+            const row = data[j];
+            const booking = {};
+            for (let k = 0; k < headers.length; k++) {
+              let val = row[k];
+              if (val instanceof Date) val = val.toISOString();
+              booking[headers[k].toLowerCase().replace(/ /g, "_")] = val;
+            }
+            // Normalisasi sales
+            booking.sales = (booking.sales || "").toString().trim().toLowerCase();
+            booking.nama_sales = (booking.nama_sales || "").toString().trim().toLowerCase();
+            booking.sheetName = sheetName;
+            booking.folderName = folderName;
+            booking.id_row = row[0];
+            allBookings.push(booking);
+          }
+        }
+      }
+    }
+  }
+  return allBookings;
+}
+
+// Tambahkan fungsi untuk mengunci sheet dari edit manual
+function protectSheet(sheet) {
+  var protection = sheet.protect();
+  protection.setDescription('Sheet dikunci otomatis');
+  protection.removeEditors(protection.getEditors());
+  if (protection.canDomainEdit()) {
+    protection.setDomainEdit(false);
+  }
+}
+
+function updateSalesRekap() {
+  try {
+    const salesRekapSS = createSalesRekapSpreadsheet();
+    const allBookings = getAllBookingData();
+    // Filter only TAB bookings
+    const tabBookings = allBookings.filter(booking => (booking.via || '').toLowerCase() === 'tab');
+    const updateDate = new Date().toISOString();
+    // Process Sales_Detail sheet
+    const detailSheet = salesRekapSS.getSheetByName("Sales_Detail");
+    if (detailSheet.getLastRow() > 1) {
+      detailSheet.clear();
+      detailSheet.appendRow([
+        "ID", "Bulan", "Tahun", "Nama Sales", "Nomor Polisi", "Nama Customer", 
+        "Tanggal Penerimaan", "Jam Penerimaan", "Via", "Admin", "Tanggal Update"
+      ]);
+    }
+    tabBookings.forEach((booking, index) => {
+      const tanggalPenerimaan = booking.tanggal_penerimaan || booking.tanggal_booking || '';
+      const date = new Date(tanggalPenerimaan);
+      const bulan = date.getMonth() + 1;
+      const tahun = date.getFullYear();
+      let sales = (booking.nama_sales || booking.sales || '').toString().trim().toLowerCase();
+      if (!SALES_LIST.includes(sales) && sales !== "") {
+        sales = booking.nama_sales || booking.sales || '';
+      }
+      detailSheet.appendRow([
+        index + 1,
+        bulan,
+        tahun,
+        sales,
+        booking.nomor_polisi || booking.plat || '',
+        booking.nama_customer || booking.nama || '',
+        tanggalPenerimaan,
+        booking.jam_penerimaan || '',
+        booking.via || '',
+        booking.admin || '',
+        updateDate
+      ]);
+    });
+    // Process Sales_Summary sheet
+    const summarySheet = salesRekapSS.getSheetByName("Sales_Summary");
+    if (summarySheet.getLastRow() > 1) {
+      summarySheet.clear();
+      summarySheet.appendRow([
+        "Bulan", "Tahun", "Nama Sales", "Total Booking", "Via TAB", "Via Lainnya", "Tanggal Update"
+      ]);
+    }
+    // Kumpulkan semua kombinasi bulan-tahun dari tabBookings
+    const bulanTahunSet = new Set();
+    tabBookings.forEach(booking => {
+      const tanggalPenerimaan = booking.tanggal_penerimaan || booking.tanggal_booking || '';
+      const date = new Date(tanggalPenerimaan);
+      const bulan = date.getMonth() + 1;
+      const tahun = date.getFullYear();
+      bulanTahunSet.add(`${bulan}_${tahun}`);
+    });
+    // Hitung summary per bulan-tahun-sales
+    const summaryData = {};
+    tabBookings.forEach(booking => {
+      const tanggalPenerimaan = booking.tanggal_penerimaan || booking.tanggal_booking || '';
+      const date = new Date(tanggalPenerimaan);
+      const bulan = date.getMonth() + 1;
+      const tahun = date.getFullYear();
+      let sales = (booking.nama_sales || booking.sales || '').toString().trim().toLowerCase();
+      if (!SALES_LIST.includes(sales) && sales !== "") {
+        sales = booking.nama_sales || booking.sales || '';
+      }
+      const via = booking.via || '';
+      const key = `${bulan}_${tahun}_${sales}`;
+      if (!summaryData[key]) {
+        summaryData[key] = {
+          bulan: bulan,
+          tahun: tahun,
+          sales: sales,
+          total: 0,
+          viaTab: 0,
+          viaLainnya: 0
+        };
+      }
+      summaryData[key].total++;
+      if (via.toLowerCase() === 'tab') {
+        summaryData[key].viaTab++;
+      } else {
+        summaryData[key].viaLainnya++;
+      }
+    });
+    // Untuk setiap kombinasi bulan-tahun, pastikan semua sales ada (meskipun 0)
+    bulanTahunSet.forEach(bulanTahun => {
+      const [bulan, tahun] = bulanTahun.split('_');
+      SALES_LIST.forEach(sales => {
+        const key = `${bulan}_${tahun}_${sales}`;
+        const summary = summaryData[key] || {
+          bulan: Number(bulan),
+          tahun: Number(tahun),
+          sales: sales,
+          total: 0,
+          viaTab: 0,
+          viaLainnya: 0
+        };
+        summarySheet.appendRow([
+          summary.bulan,
+          summary.tahun,
+          summary.sales,
+          summary.total,
+          summary.viaTab,
+          summary.viaLainnya,
+          updateDate
+        ]);
+      });
+    });
+    // Kunci sheet summary & detail
+    protectSheet(summarySheet);
+    protectSheet(detailSheet);
+    // Urutkan sheet: MRS (jika ada), Sales_Summary, Sales_Detail
+    var mrsSheet = salesRekapSS.getSheetByName('MRS');
+    if (mrsSheet) {
+      salesRekapSS.setActiveSheet(mrsSheet);
+      salesRekapSS.moveActiveSheet(0);
+    }
+    salesRekapSS.setActiveSheet(summarySheet);
+    salesRekapSS.moveActiveSheet(1);
+    salesRekapSS.setActiveSheet(detailSheet);
+    salesRekapSS.moveActiveSheet(2);
+    // Format header
+    detailSheet.getRange(1, 1, 1, 11).setFontWeight("bold");
+    summarySheet.getRange(1, 1, 1, 7).setFontWeight("bold");
+    return "✅ Sales Rekap berhasil diupdate";
+  } catch (error) {
+    return `❌ Error: ${error.toString()}`;
+  }
+} 
+
+// Fungsi untuk update sheet REKAP_SALES_BULAN di spreadsheet Booking_YYYY_MM
+function updateRekapSalesSheet(p) {
+  try {
+    const bulanNum = p.bulan || '';
+    const tahun = p.tahun || '';
+    if (!bulanNum || !tahun) return '❌ Bulan/tahun tidak valid';
+    // Nama bulan
+    const bulanMap = {
+      '01': 'JANUARI', '02': 'FEBRUARI', '03': 'MARET', '04': 'APRIL', '05': 'MEI', '06': 'JUNI',
+      '07': 'JULI', '08': 'AGUSTUS', '09': 'SEPTEMBER', '10': 'OKTOBER', '11': 'NOVEMBER', '12': 'DESEMBER'
+    };
+    const bulanStr = bulanMap[bulanNum] || bulanNum;
+    const folderName = `Booking_${tahun}_${bulanNum}`;
+    const parentId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1";
+    const parent = DriveApp.getFolderById(parentId);
+    const folders = parent.getFoldersByName(folderName);
+    if (!folders.hasNext()) return '❌ Folder tidak ditemukan';
+    const folder = folders.next();
+    const files = folder.getFilesByName(folderName);
+    if (!files.hasNext()) return '❌ Spreadsheet tidak ditemukan';
+    const ss = SpreadsheetApp.open(files.next());
+    // Nama sheet rekap
+    const rekapSheetName = `REKAP_SALES_${bulanStr}`;
+    // Hapus sheet jika sudah ada
+    const oldSheet = ss.getSheetByName(rekapSheetName);
+    if (oldSheet) ss.deleteSheet(oldSheet);
+    // Buat sheet baru
+    const rekapSheet = ss.insertSheet(rekapSheetName);
+    // Data booking bulan ini
+    const allBookings = getAllBookingData();
+    const filtered = allBookings.filter(row => {
+      if ((row.via || '').toLowerCase() !== 'tab') return false;
+      const tgl = row.tanggal_penerimaan || row.tanggal_booking || '';
+      if (!tgl) return false;
+      const d = new Date(tgl);
+      const m = (d.getMonth() + 1).toString().padStart(2, '0');
+      const y = d.getFullYear().toString();
+      return m === bulanNum && y === tahun;
+    });
+    // Hitung jumlah booking per sales
+    const salesCount = {};
+    SALES_LIST.forEach(s => salesCount[s] = 0);
+    filtered.forEach(row => {
+      let salesVal = (row.nama_sales || row.sales || '').toString().trim().toLowerCase();
+      if (SALES_LIST.includes(salesVal)) salesCount[salesVal]++;
+    });
+    // Header
+    rekapSheet.appendRow(['Nama Sales', 'Jumlah Booking']);
+    SALES_LIST.forEach(sales => {
+      if (sales === 'other') return;
+      rekapSheet.appendRow([sales.toUpperCase(), salesCount[sales]]);
+    });
+    // Tempatkan sheet setelah MRS_BULAN
+    const mrsSheetName = `MRS_${bulanStr}`;
+    const mrsSheet = ss.getSheetByName(mrsSheetName);
+    if (mrsSheet) {
+      ss.setActiveSheet(rekapSheet);
+      ss.moveActiveSheet(mrsSheet.getIndex() + 1);
+    }
+    return `✅ Sheet ${rekapSheetName} berhasil diupdate`;
+  } catch (err) {
+    return `❌ Error: ${err}`;
+  }
+} 
+
+// Fungsi untuk export hasil view rekap & grafik ke sheet EXPORT_REKAP_SALES_BULAN
+function exportRekapSalesSheet(p) {
+  try {
+    const bulanNum = p.bulan || '';
+    const tahun = p.tahun || '';
+    if (!bulanNum || !tahun) return '❌ Bulan/tahun tidak valid';
+    const bulanMap = {
+      '01': 'JANUARI', '02': 'FEBRUARI', '03': 'MARET', '04': 'APRIL', '05': 'MEI', '06': 'JUNI',
+      '07': 'JULI', '08': 'AGUSTUS', '09': 'SEPTEMBER', '10': 'OKTOBER', '11': 'NOVEMBER', '12': 'DESEMBER'
+    };
+    const bulanStr = bulanMap[bulanNum] || bulanNum;
+    const folderName = `Booking_${tahun}_${bulanNum}`;
+    const parentId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1";
+    const parent = DriveApp.getFolderById(parentId);
+    const folders = parent.getFoldersByName(folderName);
+    if (!folders.hasNext()) return '❌ Folder tidak ditemukan';
+    const folder = folders.next();
+    const files = folder.getFilesByName(folderName);
+    if (!files.hasNext()) return '❌ Spreadsheet tidak ditemukan';
+    const ss = SpreadsheetApp.open(files.next());
+    // Nama sheet export
+    const exportSheetName = `EXPORT_REKAP_SALES_${bulanStr}`;
+    // Hapus sheet jika sudah ada
+    const oldSheet = ss.getSheetByName(exportSheetName);
+    if (oldSheet) ss.deleteSheet(oldSheet);
+    // Buat sheet baru
+    const exportSheet = ss.insertSheet(exportSheetName);
+    // Data booking bulan ini
+    const allBookings = getAllBookingData();
+    const filtered = allBookings.filter(row => {
+      if ((row.via || '').toLowerCase() !== 'tab') return false;
+      const tgl = row.tanggal_penerimaan || row.tanggal_booking || '';
+      if (!tgl) return false;
+      const d = new Date(tgl);
+      const m = (d.getMonth() + 1).toString().padStart(2, '0');
+      const y = d.getFullYear().toString();
+      return m === bulanNum && y === tahun;
+    });
+    // Hitung jumlah booking per sales
+    const salesCount = {};
+    SALES_LIST.forEach(s => salesCount[s] = 0);
+    filtered.forEach(row => {
+      let salesVal = (row.nama_sales || row.sales || '').toString().trim().toLowerCase();
+      if (SALES_LIST.includes(salesVal)) salesCount[salesVal]++;
+    });
+    // Header tabel utama
+    exportSheet.appendRow(['Nama Sales', 'Jumlah Booking']);
+    SALES_LIST.forEach(sales => {
+      if (sales === 'other') return;
+      exportSheet.appendRow([sales.toUpperCase(), salesCount[sales]]);
+    });
+    // Data untuk grafik: sales dengan booking > 0
+    exportSheet.appendRow(['']);
+    exportSheet.appendRow(['Data Grafik']);
+    exportSheet.appendRow(['Nama Sales', 'Jumlah Booking']);
+    SALES_LIST.forEach(sales => {
+      if (sales === 'other') return;
+      if (salesCount[sales] > 0) {
+        exportSheet.appendRow([sales.toUpperCase(), salesCount[sales]]);
+      }
+    });
+    // Tempatkan sheet setelah REKAP_SALES_BULAN (atau setelah MRS jika belum ada)
+    const rekapSheetName = `REKAP_SALES_${bulanStr}`;
+    const mrsSheetName = `MRS_${bulanStr}`;
+    const rekapSheet = ss.getSheetByName(rekapSheetName);
+    const mrsSheet = ss.getSheetByName(mrsSheetName);
+    if (rekapSheet) {
+      ss.setActiveSheet(exportSheet);
+      ss.moveActiveSheet(rekapSheet.getIndex() + 1);
+    } else if (mrsSheet) {
+      ss.setActiveSheet(exportSheet);
+      ss.moveActiveSheet(mrsSheet.getIndex() + 1);
+    }
+    return `✅ Sheet ${exportSheetName} berhasil diexport`;
+  } catch (err) {
+    return `❌ Error: ${err}`;
+  }
 } 

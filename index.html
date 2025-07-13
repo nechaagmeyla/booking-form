@@ -4,74 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Booking Kendaraan</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #ff0000, #ffffff);
-      margin: 0; padding: 0; min-height: 100vh;
-    }
-    .container {
-      max-width: 700px; margin: 50px auto;
-      background: white; padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h2, h3 { text-align: center; color: #b30000; }
-    .form-group { margin-bottom: 15px; }
-    label { font-weight: bold; display: block; }
-    input, select, textarea {
-      width: 100%; padding: 10px;
-      border: 1px solid #ccc; border-radius: 5px;
-    }
-    button {
-      padding: 10px 20px; border: none; border-radius: 5px;
-      background-color: #b30000; color: white;
-      cursor: pointer; font-size: 1rem;
-      margin: 5px 0; transition: background 0.2s;
-    }
-    button:hover { background-color: #800000; }
-    .hidden { display: none !important; }
-    .dashboard-menu {
-      display: flex; flex-wrap: wrap;
-      justify-content: center; gap: 30px;
-      margin: 40px 0;
-    }
-    .card-btn {
-      background: #fff; border: 2px solid #b30000;
-      color: #b30000; border-radius: 10px;
-      padding: 30px 40px; font-size: 1.2rem;
-      font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      cursor: pointer; transition: all 0.2s;
-    }
-    .card-btn:hover {
-      background: #b30000; color: #fff;
-      transform: translateY(-3px) scale(1.03);
-    }
-    .logout-btn {
-      float: right;
-      background: #ccc;
-      color: #b30000;
-      font-weight: bold;
-      margin-top: -20px;
-    }
-    table {
-      width: 100%; border-collapse: collapse; margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #ccc; padding: 8px;
-      text-align: left;
-    }
-    th { background-color: #f2f2f2; }
-    .table-responsive {
-      width: 100%;
-      overflow-x: auto;
-    }
-    @media (max-width: 600px) {
-      .container { padding: 10px; }
-      .dashboard-menu { flex-direction: column; gap: 15px; }
-      .card-btn { width: 100%; padding: 20px 0; }
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="container">
@@ -177,7 +110,28 @@
         </select>
       </div>
       <div class="form-group"><label>Jenis Pekerjaan</label><textarea name="keluhan" required></textarea></div>
-      <div class="form-group"><label>Nama Sales (Opsional)</label><input type="text" name="sales" /></div>
+      <div class="form-group"><label>Nama Sales (Opsional)</label>
+        <select name="sales" id="sales_select" onchange="toggleOtherSalesBooking()">
+          <option value="">Pilih Sales</option>
+          <option value="zen">Zen</option>
+          <option value="januar">Januar</option>
+          <option value="nia">Nia</option>
+          <option value="avro">Avro</option>
+          <option value="mila">Mila</option>
+          <option value="indra">Indra</option>
+          <option value="hendra">Hendra</option>
+          <option value="irvan">Irvan</option>
+          <option value="rony">Rony</option>
+          <option value="stevy">Stevy</option>
+          <option value="osla">Osla</option>
+          <option value="imron">Imron</option>
+          <option value="asep aj">Asep AJ</option>
+          <option value="nadia">Nadia</option>
+          <option value="daulat">Daulat</option>
+          <option value="other">Other</option>
+        </select>
+        <input type="text" name="sales_other" id="sales_other_input" placeholder="Nama Sales Lain" style="display:none;margin-top:4px;" />
+      </div>
       <button type="submit" id="submitBtn">Kirim</button>
     </form>
   </div>
@@ -267,7 +221,51 @@
   <div id="rekapSalesPage" class="hidden">
     <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
     <h3>Rekap Sales</h3>
+    <div style="margin: 20px 0;">
+      <label>Pilih Bulan: 
+        <select id="rekap-sales-month">
+          <option value="">Semua Bulan</option>
+          <option value="01">Januari</option>
+          <option value="02">Februari</option>
+          <option value="03">Maret</option>
+          <option value="04">April</option>
+          <option value="05">Mei</option>
+          <option value="06">Juni</option>
+          <option value="07">Juli</option>
+          <option value="08">Agustus</option>
+          <option value="09">September</option>
+          <option value="10">Oktober</option>
+          <option value="11">November</option>
+          <option value="12">Desember</option>
+        </select>
+      </label>
+      <label>Tahun: 
+        <input type="number" id="rekap-sales-year" min="2020" max="2100" value="2025" style="width:80px; margin-left:10px;" />
+      </label>
+      <div style="margin-top: 20px;">
+        <button onclick="loadRekapSales()" class="card-btn" style="margin: 10px;">VIEW REKAP</button>
+        <button onclick="showPage('infoCustomerPage')" class="card-btn" style="margin: 10px;">VIEW INFO CUSTOMER</button>
+        <button onclick="showSalesCharts()" class="card-btn" style="margin: 10px;">LIHAT GRAFIK</button>
+        <button onclick="updateSalesRekapSpreadsheet()" class="card-btn" style="margin: 10px; background: #28a745;">UPDATE SPREADSHEET</button>
+      </div>
+    </div>
     <div id="rekapSalesTableContainer" class="table-responsive"></div>
+    <div id="salesChartsContainer" class="hidden" style="margin-top: 30px;">
+      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px;">
+          <h4>Pie Chart - Distribusi Sales</h4>
+          <canvas id="salesPieChart" width="400" height="400"></canvas>
+        </div>
+        <div style="flex: 1; min-width: 300px;">
+          <h4>Bar Chart - Perbandingan Sales</h4>
+          <canvas id="salesBarChart" width="400" height="400"></canvas>
+        </div>
+      </div>
+      <div id="salesSummary" style="margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 8px;">
+        <h4>Ringkasan</h4>
+        <div id="salesSummaryContent"></div>
+      </div>
+    </div>
   </div>
 
   <!-- MRS (Monthly Reminder System) -->
@@ -411,10 +409,26 @@
       </table>
     </div>
   </div>
+
+ 
+  <div id="infoCustomerPage" class="hidden">
+    <button onclick="showPage('rekapSalesPage')">&larr; Kembali</button>
+    <h3>Info Customer per Sales</h3>
+    <div style="margin: 20px 0;">
+      <label>Pilih Sales: <select id="customer-info-sales"></select></label>
+      <button onclick="showCustomerInfo()">View</button>
+    </div>
+    <div id="customerInfoTableContainer"></div>
+  </div>
+
+  
+  <div id="loadingIndicator" style="display:none;text-align:center;font-weight:bold;font-size:1.2em;margin:10px 0;">
+    <span id="loadingText">MEMPROSES...</span> <span style="font-size:1.5em;">⏳</span>
+  </div>
 </div>
 
 <script>
-const URL = "https://script.google.com/macros/s/AKfycbwXbjjA_RSF1qcQSENYGBgQNdVQ7u2fxEiJJrNQNauzm0IcngXsKUf3HBnZL-SMEqzz/exec";
+const URL = "https://script.google.com/macros/s/AKfycbzzz6ORbGD1ffUL3i5fUXn6YQn39In67JUt1Ji3HAvgRwmAE2Mh9xA5ibwkINipe2PC/exec";
 
 function formatDateOnly(dateStr) {
   if (!dateStr) return "";
@@ -426,17 +440,24 @@ function formatDateOnly(dateStr) {
 
 function formatJam(jamStr) {
   if (!jamStr) return "";
-  // Jika format sudah HH:mm, langsung return
   if (/^\d{1,2}:\d{2}$/.test(jamStr)) return jamStr;
-  // Jika format ISO, ambil jam dan menit
   const date = new Date(jamStr);
   if (isNaN(date.getTime())) return jamStr;
   let hours = date.getHours();
   const minutes = date.getMinutes().toString().padStart(2, '0');
   const ampm = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12;
-  hours = hours ? hours : 12; // 0 jadi 12
+  hours = hours ? hours : 12;
   return `${hours}:${minutes} ${ampm}`;
+}
+
+
+function formatTanggalOnly(dateStr) {
+  if (!dateStr) return '';
+  if (dateStr instanceof Date) return dateStr.toISOString().split('T')[0];
+  if (typeof dateStr === 'string' && dateStr.includes('T')) return dateStr.split('T')[0];
+  if (typeof dateStr === 'string') return dateStr;
+  return '';
 }
 
 const SALES_LIST = [
@@ -444,13 +465,32 @@ const SALES_LIST = [
 ];
 
 function loadRekapSales() {
-  // Ambil semua data booking (bisa disesuaikan endpointnya)
+  const selectedMonth = document.getElementById("rekap-sales-month").value;
+  const selectedYear = document.getElementById("rekap-sales-year").value || new Date().getFullYear();
+  
+ 
   fetch(`${URL}?action=get_all_booking`)
     .then(res => res.json())
     .then(data => {
-      // Filter hanya yang via = TAB
-      const filtered = data.filter(row => (row.via || '').toLowerCase() === 'tab');
+      
+      let filtered = data.filter(row => (row.via || '').toLowerCase() === 'tab');
+      
+      
+      if (selectedMonth) {
+        filtered = filtered.filter(row => {
+          const bookingDate = new Date(row.tanggal_penerimaan || row.tanggal_booking || '');
+          const bookingMonth = (bookingDate.getMonth() + 1).toString().padStart(2, '0');
+          const bookingYear = bookingDate.getFullYear().toString();
+          return bookingMonth === selectedMonth && bookingYear === selectedYear;
+        });
+      }
+      
       renderRekapSalesTable(filtered);
+      
+      // Update chart data jika chart sedang ditampilkan
+      if (!document.getElementById('salesChartsContainer').classList.contains('hidden')) {
+        updateSalesCharts(filtered);
+      }
     })
     .catch(err => {
       document.getElementById('rekapSalesTableContainer').innerHTML = `<p style='color:red'>Gagal memuat data: ${err}</p>`;
@@ -458,30 +498,39 @@ function loadRekapSales() {
 }
 
 function renderRekapSalesTable(rows) {
-  let html = `<table><thead><tr>
+  const salesCount = {};
+  SALES_LIST.forEach(s => salesCount[s] = 0);
+
+  rows.forEach(row => {
+    let salesVal = (row.nama_sales || row.sales || '').toString().trim().toLowerCase();
+    if (SALES_LIST.includes(salesVal)) {
+      salesCount[salesVal]++;
+    }
+  });
+
+  // Urutkan sales berdasarkan jumlah booking (terbanyak di atas), lalu urut SALES_LIST jika sama
+  const sortedSales = SALES_LIST
+    .filter(s => s !== 'other')
+    .sort((a, b) => {
+      if (salesCount[b] !== salesCount[a]) return salesCount[b] - salesCount[a];
+      return SALES_LIST.indexOf(a) - SALES_LIST.indexOf(b);
+    });
+
+  let html = `<table class="table table-bordered table-striped table-sm"><thead><tr>
     <th>No</th>
-    <th>Nomor Polisi</th>
-    <th>Nama Customer</th>
-    <th>Tanggal Penerimaan</th>
-    <th>Jam Penerimaan</th>
     <th>Nama Sales</th>
+    <th>Jumlah Booking</th>
   </tr></thead><tbody>`;
-  rows.forEach((row, idx) => {
-    const salesVal = row.nama_sales || row.sales || '';
+
+  let idx = 1;
+  sortedSales.forEach(sales => {
     html += `<tr>
-      <td>${idx + 1}</td>
-      <td>${row.nomor_polisi || row.plat || ''}</td>
-      <td>${row.nama_customer || row.nama || ''}</td>
-      <td>${row.tanggal_penerimaan || ''}</td>
-      <td>${row.jam_penerimaan || ''}</td>
-      <td>
-        <select onchange="toggleOtherSalesInput(this, ${idx})" data-idx="${idx}">
-          ${SALES_LIST.map(s => `<option value="${s}"${salesVal.toLowerCase() === s ? ' selected' : ''}>${s}</option>`).join('')}
-        </select>
-        <input type="text" class="other-sales-input" id="other-sales-${idx}" style="display:none;margin-top:4px;" placeholder="Nama Sales Lain" />
-      </td>
+      <td>${idx++}</td>
+      <td>${sales.toUpperCase()}</td>
+      <td>${salesCount[sales]}</td>
     </tr>`;
   });
+
   html += '</tbody></table>';
   document.getElementById('rekapSalesTableContainer').innerHTML = html;
 }
@@ -497,10 +546,245 @@ function toggleOtherSalesInput(select, idx) {
   }
 }
 
+function showCustomerInfo() {
+  const selectedMonth = document.getElementById("rekap-sales-month").value;
+  const selectedYear = document.getElementById("rekap-sales-year").value || new Date().getFullYear();
+  const selectedSales = document.getElementById('customer-info-sales').value;
+  fetch(`${URL}?action=get_all_booking`)
+    .then(res => res.json())
+    .then(data => {
+      // Filter hanya yang via = TAB, bulan/tahun, dan sales sesuai dropdown
+      let filtered = data.filter(row => (row.via || '').toLowerCase() === 'tab');
+      if (selectedMonth) {
+        filtered = filtered.filter(row => {
+          const bookingDate = new Date(row.tanggal_penerimaan || row.tanggal_booking || '');
+          const bookingMonth = (bookingDate.getMonth() + 1).toString().padStart(2, '0');
+          const bookingYear = bookingDate.getFullYear().toString();
+          return bookingMonth === selectedMonth && bookingYear === selectedYear;
+        });
+      }
+      filtered = filtered.filter(row => ((row.nama_sales || row.sales || '').toString().trim().toLowerCase() === selectedSales));
+      
+      let html = `<table class="table table-bordered table-striped table-sm"><thead><tr>
+        <th>No</th>
+        <th>Nomor Polisi</th>
+        <th>Nama Customer</th>
+        <th>Tanggal Penerimaan</th>
+      </tr></thead><tbody>`;
+      filtered.forEach((row, idx) => {
+        html += `<tr>
+          <td>${idx + 1}</td>
+          <td>${row.nomor_polisi || row.plat || ''}</td>
+          <td>${row.nama_customer || row.nama || ''}</td>
+          <td>${formatTanggalOnly(row.tanggal_penerimaan || '')}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      html += `<div style='margin-top:10px;'><strong>Total Data: ${filtered.length}</strong></div>`;
+      document.getElementById('customerInfoTableContainer').innerHTML = html;
+    })
+    .catch(err => {
+      document.getElementById('customerInfoTableContainer').innerHTML = `<p style='color:red'>Gagal memuat data: ${err}</p>`;
+    });
+}
+
+function showSalesCharts() {
+  document.getElementById('rekapSalesTableContainer').innerHTML = '';
+  document.getElementById('salesChartsContainer').classList.remove('hidden');
+  loadRekapSales(); // Ini akan memanggil updateSalesCharts
+}
+
+function updateSalesCharts(data) {
+  const salesStats = {};
+  SALES_LIST.forEach(sales => {
+    salesStats[sales] = 0;
+  });
+  
+  data.forEach(row => {
+    const salesName = (row.nama_sales || row.sales || '').toLowerCase();
+    if (salesStats.hasOwnProperty(salesName)) {
+      salesStats[salesName]++;
+    }
+  });
+
+  const salesWithData = Object.entries(salesStats).filter(([_, count]) => count > 0);
+  
+
+  salesWithData.sort((a, b) => b[1] - a[1]);
+  
+
+  const labels = salesWithData.map(([sales, _]) => sales.toUpperCase());
+  const values = salesWithData.map(([_, count]) => count);
+  const colors = generateColors(salesWithData.length);
+  
+ 
+  renderPieChart(labels, values, colors);
+  
+
+  renderBarChart(labels, values, colors);
+  
+
+  updateSalesSummary(salesWithData);
+}
+
+function renderPieChart(labels, values, colors) {
+  const canvas = document.getElementById('salesPieChart');
+  const ctx = canvas.getContext('2d');
+  
+  
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  const radius = Math.min(centerX, centerY) - 50;
+  
+  const total = values.reduce((sum, val) => sum + val, 0);
+  let currentAngle = 0;
+  
+
+  values.forEach((value, index) => {
+    const sliceAngle = (value / total) * 2 * Math.PI;
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+    ctx.closePath();
+    ctx.fillStyle = colors[index];
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+
+    const labelAngle = currentAngle + sliceAngle / 2;
+    const labelRadius = radius + 30;
+    const labelX = centerX + Math.cos(labelAngle) * labelRadius;
+    const labelY = centerY + Math.sin(labelAngle) * labelRadius;
+    
+    ctx.fillStyle = '#000';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${labels[index]}: ${value}`, labelX, labelY);
+    
+    currentAngle += sliceAngle;
+  });
+}
+
+function renderBarChart(labels, values, colors) {
+  const canvas = document.getElementById('salesBarChart');
+  const ctx = canvas.getContext('2d');
+  
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  const maxValue = Math.max(...values);
+  const barWidth = 30;
+  const barSpacing = 20;
+  const chartHeight = canvas.height - 100;
+  const chartWidth = labels.length * (barWidth + barSpacing);
+  const startX = (canvas.width - chartWidth) / 2;
+  
+
+  labels.forEach((label, index) => {
+    const barHeight = (values[index] / maxValue) * chartHeight;
+    const x = startX + index * (barWidth + barSpacing);
+    const y = canvas.height - 80 - barHeight;
+    
+
+    ctx.fillStyle = colors[index];
+    ctx.fillRect(x, y, barWidth, barHeight);
+    
+  
+    ctx.fillStyle = '#000';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(values[index], x + barWidth / 2, y - 5);
+    
+   
+    ctx.fillText(label, x + barWidth / 2, canvas.height - 20);
+  });
+}
+
+function updateSalesSummary(salesWithData) {
+  if (salesWithData.length === 0) {
+    document.getElementById('salesSummaryContent').innerHTML = '<p>Tidak ada data booking untuk periode yang dipilih.</p>';
+    return;
+  }
+  
+  const selectedMonth = document.getElementById("rekap-sales-month").value;
+  const selectedYear = document.getElementById("rekap-sales-year").value || new Date().getFullYear();
+  
+  const topSales = salesWithData[0];
+  const totalBookings = salesWithData.reduce((sum, [_, count]) => sum + count, 0);
+  
+  let html = `
+    <p><strong>Periode:</strong> ${selectedMonth ? getMonthName(selectedMonth) + ' ' + selectedYear : 'Semua Periode'}</p>
+    <p><strong>Total Booking:</strong> ${totalBookings}</p>
+    <p><strong>Sales Terbanyak:</strong> ${topSales[0].toUpperCase()} dengan ${topSales[1]} booking</p>
+    <p><strong>Persentase Sales Terbanyak:</strong> ${((topSales[1] / totalBookings) * 100).toFixed(1)}%</p>
+  `;
+  
+  document.getElementById('salesSummaryContent').innerHTML = html;
+}
+
+function generateColors(count) {
+  const colors = [
+    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+    '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384',
+    '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+  ];
+  
+  return colors.slice(0, count);
+}
+
+function getMonthName(monthNumber) {
+  const months = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+  return months[parseInt(monthNumber) - 1];
+}
+
+function updateSalesRekapSpreadsheet() {
+  const selectedMonth = document.getElementById("rekap-sales-month").value;
+  const selectedYear = document.getElementById("rekap-sales-year").value || new Date().getFullYear();
+  if (!selectedMonth || !selectedYear) {
+    alert('Pilih bulan dan tahun terlebih dahulu!');
+    return;
+  }
+  if (!confirm('Yakin ingin mengupdate spreadsheet Sales Rekap untuk bulan ini?')) {
+    return;
+  }
+  showLoading('MEMPROSES...');
+  const params = new URLSearchParams();
+  params.append("action", "update_sales_rekap");
+  params.append("bulan", selectedMonth);
+  params.append("tahun", selectedYear);
+  fetch(URL, {
+    method: "POST",
+    body: params
+  })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      hideLoading();
+    })
+    .catch(err => {
+      alert("Gagal mengupdate spreadsheet: " + err);
+      hideLoading();
+    });
+}
+
 function showPage(id) {
-  ["loginPage", "dashboardPage", "bookingPage", "dataPage", "rekapPage", "mrsPage", "mrsInputPage", "mrsViewPage", "mrsViewByMonthPage", "rekapSalesPage"].forEach(p => document.getElementById(p).classList.add("hidden"));
+  ["loginPage", "dashboardPage", "bookingPage", "dataPage", "rekapPage", "mrsPage", "mrsInputPage", "mrsViewPage", "mrsViewByMonthPage", "rekapSalesPage", "infoCustomerPage"].forEach(p => document.getElementById(p).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
-  if (id === 'rekapSalesPage') loadRekapSales();
+  if (id === 'rekapSalesPage') {
+    loadRekapSales();
+
+    document.getElementById('salesChartsContainer').classList.add("hidden");
+    populateCustomerInfoSalesDropdown(); 
+  }
+  if (id === 'infoCustomerPage') {
+    populateCustomerInfoSalesDropdown(); 
+  }
 }
 
 function checkLogin() {
@@ -535,34 +819,36 @@ document.getElementById("bookingForm").addEventListener("submit", function(e) {
   const formData = new FormData(form);
   const params = new URLSearchParams();
   
-  // Handle phone number logic
+
   const tipeTelepon = form.tipe_telepon.value;
   if (tipeTelepon === "SA") {
-    // If SA is selected, use the SA dropdown value
     formData.set("nohp", form.nohp_sa.value);
-    // Use dropdown value for customer datang
     formData.set("datang", form.datang_dropdown.value);
   } else {
-    // If TELP is selected, add "62" prefix to the phone number
     const noHpInput = document.getElementById("nohp_input").value;
     if (noHpInput) {
-      // Remove any existing "62" prefix and add it back
       const cleanNumber = noHpInput.replace(/^62/, '');
       formData.set("nohp", "62" + cleanNumber);
+    } else {
+      formData.set("nohp", "");
     }
-    // Use text input value for customer datang
     formData.set("datang", form.datang.value);
   }
   
+ 
+  let salesValue = form.sales.value;
+  if (salesValue === 'other') {
+    salesValue = form.sales_other.value;
+  }
+  formData.set('sales', salesValue);
+
   formData.forEach((v, k) => params.append(k, v));
 
-  // Cek apakah ini edit atau tambah baru
   const isEdit = form.editId.value !== "";
   if (isEdit) {
     params.append("id_row", form.editId.value);
     params.append("sheetName", form.sheetName.value);
     params.append("action", "edit");
-    // Tambahkan status hanya saat edit
     params.append("status_kehadiran", document.getElementById("status_kehadiran_select").value);
   }
 
@@ -574,15 +860,15 @@ document.getElementById("bookingForm").addEventListener("submit", function(e) {
     .then(msg => {
       alert(msg);
       if (isEdit) {
-        // Jika edit, kembali ke halaman data dan refresh
+        
         document.getElementById("editId").value = "";
         document.getElementById("sheetName").value = "";
         showPage("dataPage");
         loadData();
       } else {
-        // Jika tambah baru, reset form dan tetap di halaman booking
+        
         form.reset();
-        // Reset phone input display
+        
         document.getElementById("phoneInputGroup").style.display = "none";
         document.getElementById("saPhoneGroup").style.display = "none";
       }
@@ -609,9 +895,9 @@ function loadData() {
       }
 
       data.forEach((row, idx) => {
-        // Penyesuaian field sesuai header
+        
         const status = row.status_kehadiran || "";
-        const displayStatus = status || "-"; // Tampilkan "-" jika kosong
+        const displayStatus = status || "-"; 
         
         const tds = `
           <td>${idx + 1}</td>
@@ -679,16 +965,16 @@ function togglePhoneInput() {
   }
 }
 
-// Function to format phone number input
+
 function formatPhoneNumber(input) {
-  let value = input.value.replace(/\D/g, ''); // Remove non-digits
+  let value = input.value.replace(/\D/g, ''); 
   
-  // Remove "62" if user tries to type it
+  
   if (value.startsWith('62')) {
     value = value.substring(2);
   }
   
-  // Limit to reasonable length (max 12 digits after removing 62)
+  
   if (value.length > 12) {
     value = value.substring(0, 12);
   }
@@ -696,7 +982,7 @@ function formatPhoneNumber(input) {
   input.value = value;
 }
 
-// Add event listener to phone input
+
 document.addEventListener('DOMContentLoaded', function() {
   const phoneInput = document.getElementById('nohp_input');
   if (phoneInput) {
@@ -704,7 +990,7 @@ document.addEventListener('DOMContentLoaded', function() {
       formatPhoneNumber(this);
     });
     
-    // Prevent paste of numbers starting with 62
+    
     phoneInput.addEventListener('paste', function(e) {
       e.preventDefault();
       const pastedText = (e.clipboardData || window.clipboardData).getData('text');
@@ -719,7 +1005,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Set current month as default in MRS form
+  
   const currentMonth = new Date().toLocaleString('id-ID', { month: 'long' });
   const reminderMonthSelect = document.querySelector('select[name="reminder_month"]');
   if (reminderMonthSelect) {
@@ -727,13 +1013,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// MRS Form Submission
+
 document.getElementById("mrsForm").addEventListener("submit", function(e) {
   e.preventDefault();
   const form = e.target;
   const formData = new FormData(form);
   const params = new URLSearchParams();
-  // Otomatis prefix 62
+  
   let nohp = form.nohp_mrs.value.replace(/\D/g, '');
   if (nohp.startsWith('62')) nohp = nohp.substring(2);
   params.append("nohp_mrs", "62" + nohp);
@@ -850,7 +1136,7 @@ function editRow(row) {
   form.tipe.value = row.tipe_kendaraan || "";
   form.tahun.value = row.tahun || "";
   
-  // Handle tipe telepon and phone number
+
   const tipeTelepon = row.tipe_telepon || "";
   form.tipe_telepon.value = tipeTelepon;
   if (tipeTelepon === "SA") {
@@ -859,7 +1145,7 @@ function editRow(row) {
     document.getElementById("nohp_sa_select").value = row.no_hp || row.nohp || "";
     document.getElementById("nohp_input").value = "";
     
-    // Show dropdown for customer datang when SA is selected
+    
     document.getElementById("customerDatangGroup").style.display = "none";
     document.getElementById("customerDatangDropdown").style.display = "block";
     document.getElementById("datang_select").value = row.customer_akan_datang || row.datang || "";
@@ -867,20 +1153,38 @@ function editRow(row) {
   } else {
     document.getElementById("phoneInputGroup").style.display = "block";
     document.getElementById("saPhoneGroup").style.display = "none";
-    // Remove "62" prefix for display in input field
+    
     const phoneNumber = row.no_hp || row.nohp || "";
     const displayNumber = phoneNumber.startsWith("62") ? phoneNumber.substring(2) : phoneNumber;
     document.getElementById("nohp_input").value = displayNumber;
     document.getElementById("nohp_sa_select").value = "";
     
-    // Show text input for customer datang when TELP is selected
+    
     document.getElementById("customerDatangGroup").style.display = "block";
     document.getElementById("customerDatangDropdown").style.display = "none";
     document.getElementById("datang_input").value = row.customer_akan_datang || row.datang || "";
     document.getElementById("datang_select").value = "";
   }
   
-  // Handle customer datang dropdown - removed this section since it's now handled above
+  
+  let salesVal = row.nama_sales || row.sales || "";
+  const salesSelect = document.getElementById("sales_select");
+  const salesOtherInput = document.getElementById("sales_other_input");
+  if (["zen","januar","nia","avro","mila","indra","hendra","irvan","rony","stevy","osla","imron","asep aj","nadia","daulat"].includes(salesVal.toLowerCase())) {
+    salesSelect.value = salesVal.toLowerCase();
+    salesOtherInput.style.display = 'none';
+    salesOtherInput.value = '';
+  } else if (salesVal) {
+    salesSelect.value = 'other';
+    salesOtherInput.style.display = 'block';
+    salesOtherInput.value = salesVal;
+  } else {
+    salesSelect.value = '';
+    salesOtherInput.style.display = 'none';
+    salesOtherInput.value = '';
+  }
+  
+  
   
   form.nama.value = row.nama_customer || "";
   form.tanggal_penerimaan.value = row.tanggal_penerimaan || "";
@@ -946,7 +1250,7 @@ function loadRekap() {
         return;
       }
 
-      // Hitung statistik
+      
       let showCount = 0, noShowCount = 0, rescheduleCount = 0, unknownCount = 0;
       
       data.forEach((row, idx) => {
@@ -954,9 +1258,9 @@ function loadRekap() {
         if (status === "show") showCount++;
         else if (status === "no show") noShowCount++;
         else if (status === "reschedule") rescheduleCount++;
-        else unknownCount++; // Untuk status kosong atau tidak diketahui
+        else unknownCount++; 
 
-        const displayStatus = status || "-"; // Tampilkan "-" jika kosong
+        const displayStatus = status || "-"; 
 
         const tds = `
           <td>${idx + 1}</td>
@@ -974,7 +1278,7 @@ function loadRekap() {
         tbody.appendChild(tr);
       });
 
-      // Update ringkasan
+      
       document.getElementById("showCount").textContent = showCount;
       document.getElementById("noShowCount").textContent = noShowCount;
       document.getElementById("rescheduleCount").textContent = rescheduleCount;
@@ -1072,6 +1376,22 @@ function editMRS(idx) {
 
 function deleteMRSView(idx) {
   alert('Fitur hapus MRS dari View belum diimplementasikan. Index data: ' + idx);
+}
+
+function toggleOtherSalesBooking() {
+  const select = document.getElementById('sales_select');
+  const input = document.getElementById('sales_other_input');
+  if (select.value === 'other') {
+    input.style.display = 'block';
+  } else {
+    input.style.display = 'none';
+    input.value = '';
+  }
+}
+
+function populateCustomerInfoSalesDropdown() {
+  const select = document.getElementById('customer-info-sales');
+  select.innerHTML = SALES_LIST.filter(s => s !== 'other').map(s => `<option value="${s}">${s.toUpperCase()}</option>`).join('');
 }
 
 window.onload = checkLogin;
