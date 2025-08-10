@@ -12,13 +12,34 @@ const SALES_LIST = [
 
 function doGet(e) {
   const action = e.parameter.action;
+
   if (action === "get_mrs_view") return doGetMRSView(e);
   if (action === "get_mrs") return doGetMRS(e);
   if (action === "get_all_booking") return doGetAllBooking(e);
-  
+  if (action === "get_ths") {
+    const bulan = e.parameter.bulan || "";
+    const tahun = e.parameter.tahun || "";
+    return ContentService.createTextOutput(
+      JSON.stringify(getTHSData(bulan, tahun))
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // ✅ Endpoint baru gabungan TAB + THS
+  if (action === "get_booking_sales_merge") {
+    const bulan = e.parameter.bulan || "";
+    const tahun = e.parameter.tahun || "";
+    return ContentService.createTextOutput(
+      JSON.stringify(getBookingSalesMerge(bulan, tahun))
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // ✅ Default: ambil data booking per tanggal
   const tanggal = e.parameter.tanggal_penerimaan;
-  
-  if (!tanggal) return ContentService.createTextOutput("❌ Tanggal kosong");
+  if (!tanggal) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ error: "Tanggal kosong" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 
   const date = new Date(tanggal);
   const folderName = `Booking_${date.getFullYear()}_${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -47,12 +68,69 @@ function doGet(e) {
       row[headers[j].toLowerCase().replace(/ /g, "_")] = val;
     }
     row.sheetName = sheet.getName();
-    row.id_row = data[i][0]; // Add id_row for edit/delete operations
+    row.id_row = data[i][0]; // Add id_row for edit/delete
     result.push(row);
   }
 
-  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
 }
+
+function getTHSData(bulan, tahun) {
+  const folderId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1"; // ID folder parent THS
+  const parent = DriveApp.getFolderById(folderId);
+  const fileName = `THS_${tahun}_${bulan}`;
+  const files = parent.getFilesByName(fileName);
+
+  if (!files.hasNext()) return [];
+
+  const ss = SpreadsheetApp.open(files.next());
+  const sheet = ss.getSheets()[0]; // Ambil sheet pertama, atau ganti sesuai nama pasti
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const result = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const row = {};
+    for (let j = 0; j < headers.length; j++) {
+      let val = data[i][j];
+      if (val instanceof Date) val = val.toISOString();
+      row[headers[j].toLowerCase().replace(/ /g, "_")] = val;
+    }
+    // Pastikan ada field untuk dikenali frontend
+    row.source_type = "ths";
+    result.push(row);
+  }
+
+  return result;
+}
+
+
+function getBookingSalesMerge(bulan, tahun) {
+  let tabData = getAllBookingData().filter(row => (row.via || "").toLowerCase() === "tab");
+
+  if (bulan && tahun) {
+    tabData = tabData.filter(row => {
+      const d = new Date(row.tanggal_penerimaan || row.tanggal_booking || "");
+      return (d.getMonth() + 1).toString().padStart(2, "0") === bulan && d.getFullYear().toString() === tahun;
+    });
+  }
+
+  const thsData = getTHSData(bulan, tahun);
+
+  const tabWithType = tabData.map(row => {
+    row.source_type = "bengkel";
+    return row;
+  });
+
+  const thsWithType = thsData.map(row => {
+    row.source_type = "ths";
+    return row;
+  });
+
+  return [...tabWithType, ...thsWithType];
+}
+
 
 function doGetMRSView(e) {
   var bulan = e.parameter.bulan; // Contoh: 'Mei'
@@ -141,7 +219,15 @@ function doGetMRS(e) {
 
 function doPost(e) {
   const p = e.parameter;
+  const action = e.parameter.action;
+
   // Handle different actions
+  if (action === "add_ths_booking") return addTHSBooking(e);
+  if (action === "edit_ths_booking") return editTHSBooking(e);
+  if (action === "delete_ths_booking") return deleteTHSBooking(e);
+
+   
+
   if (p.action === "delete") return doDelete(e);
   if (p.action === "edit") return doEdit(e);
   if (p.action === "export_rekap") return doExportRekap(e);
@@ -149,6 +235,7 @@ function doPost(e) {
   if (p.action === "delete_mrs") return doDeleteMRS(e);
   if (p.action === "update_sales_rekap") return ContentService.createTextOutput(updateRekapSalesSheet(p));
   if (p.action === "export_rekap_sales") return ContentService.createTextOutput(exportRekapSalesSheet(p));
+  if (p.action === "update_kedatangan") return doUpdateKedatangan(e);
 
   // === TAMBAH BOOKING ===
   const tglBooking = formatTanggalLengkap(new Date());
@@ -190,19 +277,75 @@ function doPost(e) {
   return ContentService.createTextOutput("✅ Data berhasil ditambahkan.");
 }
 
+function doAddTHS(e) {
+  const p = e.parameter;
+  const tahun = new Date(p.tanggal_penerimaan).getFullYear();
+  const bulan = String(new Date(p.tanggal_penerimaan).getMonth() + 1).padStart(2, '0');
+  
+  // Nama bulan untuk sheet
+  const bulanNamaMap = {
+    "01": "JANUARI", "02": "FEBRUARI", "03": "MARET", "04": "APRIL",
+    "05": "MEI", "06": "JUNI", "07": "JULI", "08": "AGUSTUS",
+    "09": "SEPTEMBER", "10": "OKTOBER", "11": "NOVEMBER", "12": "DESEMBER"
+  };
+  const bulanNama = bulanNamaMap[bulan];
+  
+  // 1. Ambil folder bulan Booking_YYYY_MM
+  const parentId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1"; // GANTI dgn ID folder root Booking Kendaraan
+  const parent = DriveApp.getFolderById(parentId);
+  const folderName = `Booking_${tahun}_${bulan}`;
+  const folders = parent.getFoldersByName(folderName);
+  if (!folders.hasNext()) {
+    return ContentService.createTextOutput(`❌ Folder ${folderName} tidak ditemukan`);
+  }
+  const folder = folders.next();
+  
+  // 2. Ambil spreadsheet Booking_YYYY_MM
+  const files = folder.getFilesByName(folderName);
+  if (!files.hasNext()) {
+    return ContentService.createTextOutput(`❌ Spreadsheet ${folderName} tidak ditemukan`);
+  }
+  const spreadsheet = SpreadsheetApp.open(files.next());
+  
+  // 3. Sheet THS_[BULAN]
+  const sheetName = `THS_${bulanNama}`;
+  let thsSheet = spreadsheet.getSheetByName(sheetName);
+  if (!thsSheet) {
+    thsSheet = spreadsheet.insertSheet(sheetName);
+    thsSheet.appendRow(["Nama Sales", "Nomor Polisi", "Keterangan", "Tanggal Penerimaan"]);
+  }
+  
+  // 4. Tambahkan data
+  thsSheet.appendRow([
+    p.nama_sales,
+    p.nopol,
+    p.keterangan,
+    p.tanggal_penerimaan
+  ]);
+  
+  return ContentService.createTextOutput("✅ Data THS berhasil ditambahkan.");
+}
+
+
+function getFolderByName(name) {
+  const folders = DriveApp.getFoldersByName(name);
+  return folders.hasNext() ? folders.next() : null;
+}
+
 function doEdit(e) {
   const p = e.parameter;
   const sheet = getSheetBySheetName(p.tanggal_penerimaan, p.sheetName);
   if (!sheet) return ContentService.createTextOutput("❌ Sheet tidak ditemukan");
   const data = sheet.getDataRange().getValues();
-  const rowIdx = data.findIndex(row => row[0] === p.id_row);
+  const rowIdx = data.findIndex(row => String(row[0]).trim() === String(p.id_row).trim());
   if (rowIdx === -1) return ContentService.createTextOutput("❌ Data tidak ditemukan");
-  const tglBooking = formatTanggalLengkap(new Date());
+  
   // Normalisasi sales
   let salesVal = (p.sales || "").toString().trim().toLowerCase();
   if (!SALES_LIST.includes(salesVal) && salesVal !== "") {
     salesVal = p.sales;
   }
+  
   // === LOGIKA NO HP & CUSTOMER AKAN DATANG (sama seperti tambah) ===
   let nohp = "";
   let datang = "";
@@ -219,14 +362,38 @@ function doEdit(e) {
     }
     datang = p.datang || "";
   }
-  // Status Kehadiran boleh diisi saat edit
-  const statusKehadiran = p.status_kehadiran || "";
+  
+  // Status Kehadiran boleh diisi saat edit - pastikan tidak kosong jika sudah diisi
+  const statusKehadiran = p.status_kehadiran || data[rowIdx][2] || "";
+  
+  // Update existing row directly - NEVER create new data
   const updateRow = [
-    p.id_row, "", statusKehadiran, p.plat, p.tipe, p.tahun, p.tipe_telepon || "", nohp, datang, p.nama,
-    tglBooking, p.tanggal_penerimaan, p.jam_penerimaan, p.via, p.admin, p.keluhan, salesVal
+    p.id_row, 
+    data[rowIdx][1], // Keep existing No
+    statusKehadiran, 
+    p.plat, 
+    p.tipe, 
+    p.tahun, 
+    p.tipe_telepon || "", 
+    nohp, 
+    datang, 
+    p.nama,
+    data[rowIdx][10], // Keep existing Tanggal Booking
+    p.tanggal_penerimaan, 
+    p.jam_penerimaan, 
+    p.via, 
+    p.admin, 
+    p.keluhan, 
+    salesVal
   ];
-  sheet.deleteRow(rowIdx + 1);
-  insertDataSortedByJam(sheet, updateRow);
+  
+  // Update the existing row directly - NO insertion or deletion
+  sheet.getRange(rowIdx + 1, 1, 1, updateRow.length).setValues([updateRow]);
+  
+  // DO NOT call insertDataSortedByJam or any function that adds new rows
+  // Only update row numbers to ensure consistency
+  updateRowNumbers(sheet);
+  
   return ContentService.createTextOutput("✅ Data berhasil diupdate.");
 }
 
@@ -414,6 +581,25 @@ function updateRowNumbers(sheet) {
   for (let i = 1; i < data.length; i++) {
     sheet.getRange(i + 1, 2).setValue(i);
   }
+}
+
+function updateExistingRow(sheet, rowIdx, updateData) {
+  // Update existing row without deleting and reinserting
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const updateRow = [];
+  
+  // Build update row based on headers
+  for (let i = 0; i < headers.length; i++) {
+    if (updateData[headers[i].toLowerCase().replace(/ /g, "_")]) {
+      updateRow.push(updateData[headers[i].toLowerCase().replace(/ /g, "_")]);
+    } else {
+      // Keep existing value
+      updateRow.push(sheet.getRange(rowIdx + 1, i + 1).getValue());
+    }
+  }
+  
+  // Update the row directly
+  sheet.getRange(rowIdx + 1, 1, 1, updateRow.length).setValues([updateRow]);
 }
 
 function getOrCreateSheet(tanggal) {
@@ -718,7 +904,7 @@ function updateSalesRekap() {
       const tahun = date.getFullYear();
       bulanTahunSet.add(`${bulan}_${tahun}`);
     });
-    // Hitung summary per bulan-tahun-sales
+
     const summaryData = {};
     tabBookings.forEach(booking => {
       const tanggalPenerimaan = booking.tanggal_penerimaan || booking.tanggal_booking || '';
@@ -935,5 +1121,99 @@ function exportRekapSalesSheet(p) {
     return `✅ Sheet ${exportSheetName} berhasil diexport`;
   } catch (err) {
     return `❌ Error: ${err}`;
+  }
+}
+
+function doUpdateKedatangan(e) {
+  const p = e.parameter;
+  const { id_row, sheetName, status_kehadiran, catatan } = p;
+  
+  console.log('doUpdateKedatangan received:', { id_row, sheetName, status_kehadiran, catatan });
+  
+  if (!id_row || !sheetName || !status_kehadiran) {
+    return ContentService.createTextOutput("❌ Data tidak lengkap");
+  }
+  
+  try {
+    // Get all bookings to find the target
+    const allBookings = getAllBookingData();
+    console.log('Total bookings found:', allBookings.length);
+    
+    // Find the target booking
+    const targetBooking = allBookings.find(booking => 
+      String(booking.id_row) === String(id_row)
+    );
+    
+    if (!targetBooking) {
+      console.log('Target booking not found for id_row:', id_row);
+      return ContentService.createTextOutput("❌ Data booking tidak ditemukan");
+    }
+    
+    console.log('Found target booking:', targetBooking);
+    
+    // Get the sheet directly using the booking data
+    const sheet = getSheetBySheetName(targetBooking.tanggal_penerimaan, targetBooking.sheetName);
+    if (!sheet) {
+      return ContentService.createTextOutput("❌ Sheet tidak ditemukan");
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    console.log('Sheet headers:', headers);
+    
+    // Find the row by id_row
+    const rowIdx = data.findIndex(row => String(row[0]) === String(id_row));
+    if (rowIdx === -1) {
+      console.log('Row not found for id_row:', id_row);
+      return ContentService.createTextOutput("❌ Data tidak ditemukan di sheet");
+    }
+    
+    console.log('Found row at index:', rowIdx);
+    console.log('Row data before update:', data[rowIdx]);
+    
+    // Find Status Kehadiran column - use exact column index 2 (Status Kehadiran)
+    const statusColIdx = 2; // Column C is index 2 (0-based)
+    console.log('Using status column index:', statusColIdx);
+    console.log('Status column header:', headers[statusColIdx]);
+    
+    // Get current value before update
+    const currentValue = data[rowIdx][statusColIdx];
+    console.log('Current value before update:', currentValue);
+    
+    // Update the status directly in the data array and then write it back
+    data[rowIdx][statusColIdx] = status_kehadiran;
+    
+    // Add catatan if provided
+    if (catatan && catatan.trim() !== '') {
+      const keluhanColIdx = 15; // Jenis Pekerjaan column
+      const currentKeluhan = data[rowIdx][keluhanColIdx] || '';
+      const updatedKeluhan = currentKeluhan + (currentKeluhan ? ' | ' : '') + `Catatan: ${catatan}`;
+      data[rowIdx][keluhanColIdx] = updatedKeluhan;
+    }
+    
+    // Write the entire updated row back to the sheet
+    console.log('Writing updated row:', data[rowIdx]);
+    sheet.getRange(rowIdx + 1, 1, 1, data[rowIdx].length).setValues([data[rowIdx]]);
+    
+    // Verify the update by reading it back
+    const verificationValue = sheet.getRange(rowIdx + 1, statusColIdx + 1).getValue();
+    console.log('Verification - Updated value:', verificationValue);
+    
+    if (String(verificationValue).toLowerCase() !== String(status_kehadiran).toLowerCase()) {
+      console.log('Warning: Update verification failed');
+      console.log('Expected:', status_kehadiran, 'Got:', verificationValue);
+      return ContentService.createTextOutput("❌ Gagal mengupdate status kehadiran - verifikasi gagal");
+    }
+    
+    // Update row numbers to ensure consistency
+    updateRowNumbers(sheet);
+    
+    console.log('Status kedatangan updated successfully:', status_kehadiran);
+    
+    return ContentService.createTextOutput("✅ Status kedatangan berhasil diupdate");
+    
+  } catch (error) {
+    console.error('Error in doUpdateKedatangan:', error);
+    return ContentService.createTextOutput(`❌ Error: ${error.toString()}`);
   }
 } 

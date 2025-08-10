@@ -59,8 +59,151 @@ th { background-color: #f2f2f2; }
   width: 100%;
   overflow-x: auto;
 }
+/* Modal Styles */
+.modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: white;
+  margin: auto;
+  padding: 0;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  background: #b30000;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 10px 10px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: white;
+}
+
+.close {
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close:hover {
+  color: #ccc;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-primary {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #218838;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+/* Status styling */
+.status-show {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.status-no-show {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.status-reschedule {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.status- {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-style: italic;
+}
+
 @media (max-width: 600px) {
   .container { padding: 10px; }
   .dashboard-menu { flex-direction: column; gap: 15px; }
   .card-btn { width: 100%; padding: 20px 0; }
+  .modal-content { width: 95%; margin: 10px; }
 } 
+
+#rekapTotalTableContainer table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+#rekapTotalTableContainer th,
+#rekapTotalTableContainer td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+#rekapTotalTableContainer th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  color: #333;
+}
+...

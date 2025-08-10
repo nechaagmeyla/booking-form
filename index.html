@@ -27,7 +27,9 @@
       <button class="card-btn" onclick="showPage('dataPage')">Data Booking</button>
       <button class="card-btn" onclick="showPage('rekapPage')">Rekap Show/No Show/Reschedule</button>
       <button class="card-btn" onclick="showPage('rekapSalesPage')">Rekap Sales</button>
-      <button class="card-btn" onclick="showPage('mrsPage')">MRS (Monthly Reminder System)</button>
+      <button class="card-btn" onclick="showPage('mrsPage')">MRS (Maintenance Reminder System)</button>
+      <button onclick="loadTotalBookingSales()" class="card-btn" style="margin: 10px; background: #007bff; color: white;">
+        TOTAL BOOKING SALES</button>      
     </div>
   </div>
 
@@ -218,60 +220,107 @@
   </div>
 
   <!-- REKAP SALES -->
-  <div id="rekapSalesPage" class="hidden">
-    <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
-    <h3>Rekap Sales</h3>
-    <div style="margin: 20px 0;">
-      <label>Pilih Bulan: 
-        <select id="rekap-sales-month">
-          <option value="">Semua Bulan</option>
-          <option value="01">Januari</option>
-          <option value="02">Februari</option>
-          <option value="03">Maret</option>
-          <option value="04">April</option>
-          <option value="05">Mei</option>
-          <option value="06">Juni</option>
-          <option value="07">Juli</option>
-          <option value="08">Agustus</option>
-          <option value="09">September</option>
-          <option value="10">Oktober</option>
-          <option value="11">November</option>
-          <option value="12">Desember</option>
-        </select>
-      </label>
-      <label>Tahun: 
-        <input type="number" id="rekap-sales-year" min="2020" max="2100" value="2025" style="width:80px; margin-left:10px;" />
-      </label>
-      <div style="margin-top: 20px;">
-        <button onclick="loadRekapSales()" class="card-btn" style="margin: 10px;">VIEW REKAP</button>
-        <button onclick="showPage('infoCustomerPage')" class="card-btn" style="margin: 10px;">VIEW INFO CUSTOMER</button>
-        <button onclick="showSalesCharts()" class="card-btn" style="margin: 10px;">LIHAT GRAFIK</button>
-        <button onclick="updateSalesRekapSpreadsheet()" class="card-btn" style="margin: 10px; background: #28a745;">UPDATE SPREADSHEET</button>
-      </div>
-    </div>
-    <div id="rekapSalesTableContainer" class="table-responsive"></div>
-    <div id="salesChartsContainer" class="hidden" style="margin-top: 30px;">
-      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 300px;">
-          <h4>Pie Chart - Distribusi Sales</h4>
-          <canvas id="salesPieChart" width="400" height="400"></canvas>
-        </div>
-        <div style="flex: 1; min-width: 300px;">
-          <h4>Bar Chart - Perbandingan Sales</h4>
-          <canvas id="salesBarChart" width="400" height="400"></canvas>
-        </div>
-      </div>
-      <div id="salesSummary" style="margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 8px;">
-        <h4>Ringkasan</h4>
-        <div id="salesSummaryContent"></div>
-      </div>
+<div id="rekapSalesPage" class="hidden">
+  <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
+  <h3>Rekap Sales</h3>
+  <div style="margin: 20px 0;">
+    <label>Pilih Bulan: 
+      <select id="rekap-sales-month">
+        <option value="">Semua Bulan</option>
+        <option value="01">Januari</option>
+        <option value="02">Februari</option>
+        <option value="03">Maret</option>
+        <option value="04">April</option>
+        <option value="05">Mei</option>
+        <option value="06">Juni</option>
+        <option value="07">Juli</option>
+        <option value="08">Agustus</option>
+        <option value="09">September</option>
+        <option value="10">Oktober</option>
+        <option value="11">November</option>
+        <option value="12">Desember</option>
+      </select>
+    </label>
+    <label>Tahun: 
+      <input type="number" id="rekap-sales-year" min="2020" max="2100" value="2025" style="width:80px; margin-left:10px;" />
+    </label>
+    <div style="margin-top: 20px;">
+      <button onclick="loadRekapSales()" class="card-btn" style="margin: 10px;">VIEW REKAP</button>
+      <button onclick="showPage('infoCustomerPage')" class="card-btn" style="margin: 10px;">VIEW INFO CUSTOMER</button>
+      <button onclick="showPage('thsBookingPage')" class="card-btn" style="margin: 10px;">Booking THS</button>
+      <button onclick="loadRekapTHS()" class="card-btn" style="margin: 10px;">VIEW REKAP SALES by THS</button>
+      <button onclick="showSalesCharts()" class="card-btn" style="margin: 10px;">LIHAT GRAFIK</button>
+      <button onclick="updateSalesRekapSpreadsheet()" class="card-btn" style="margin: 10px; background: #28a745;">UPDATE SPREADSHEET</button>
+      <button onclick="loadTotalBookingSales()" class="card-btn" style="margin: 10px; background: #007bff; color: white;">
+        TOTAL BOOKING SALES
+      </button>
     </div>
   </div>
+  <div id="rekapSalesTableContainer" class="table-responsive"></div>
+  <div id="salesChartsContainer" class="hidden" style="margin-top: 30px;">
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 300px;">
+        <h4>Pie Chart - Distribusi Sales</h4>
+        <canvas id="salesPieChart" width="400" height="400"></canvas>
+      </div>
+      <div style="flex: 1; min-width: 300px;">
+        <h4>Bar Chart - Perbandingan Sales</h4>
+        <canvas id="salesBarChart" width="400" height="400"></canvas>
+      </div>
+    </div>
+    <div id="salesSummary" style="margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 8px;">
+      <h4>Ringkasan</h4>
+      <div id="salesSummaryContent"></div>
+    </div>
+  </div>
+</div>
 
-  <!-- MRS (Monthly Reminder System) -->
+<!-- THS BOOKING PAGE -->
+<div id="thsBookingPage" class="hidden">
+  <button onclick="showPage('rekapSalesPage')">&larr; Kembali</button>
+  <h3>Input Data THS</h3>
+  <form id="thsBookingForm">
+    <label>Nama Sales:
+      <select name="nama_sales" required>
+        <option value="">-- Pilih Sales --</option>
+        <option value="Zen">Zen</option>
+        <option value="Nia">Nia</option>
+        <option value="Avro">Avro</option>
+        <option value="Januar">Januar</option>
+        <option value="Mila">Mila</option>
+        <option value="Indra">Indra</option>
+        <option value="Hendra">Hendra</option>
+        <option value="Irvan">Irvan</option>
+        <option value="Rony">Rony</option>
+        <option value="Stevy">Stevy</option>
+        <option value="Osla">Osla</option>
+        <option value="Imron">Imron</option>
+        <option value="Asep AJ">Asep AJ</option>
+        <option value="Nadia">Nadia</option>
+        <option value="Daulat">Daulat</option>
+      </select>
+    </label><br>
+    <label>No. Polisi:
+      <input type="text" name="nopol" required>
+    </label><br>
+    <label>Keterangan:
+      <select name="keterangan" required>
+        <option value="show">Show</option>
+        <option value="noshow">No Show</option>
+        <option value="resc">Reschedule</option>
+      </select>
+    </label><br>
+    <label>Tanggal Penerimaan:
+      <input type="date" name="tanggal_penerimaan" required>
+    </label><br>
+    <button type="submit">Simpan</button>
+  </form>
+</div>
+
+  <!-- MRS (Maintenance Reminder System) -->
   <div id="mrsPage" class="hidden">
     <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
-    <h3>MRS (Monthly Reminder System)</h3>
+    <h3>MRS (Maintenance Reminder System)</h3>
     <div style="margin: 20px 0;">
       <button onclick="showPage('mrsInputPage')" class="card-btn" style="margin: 10px;">Input MRS</button>
       <button onclick="showPage('mrsViewPage')" class="card-btn" style="margin: 10px;">View MRS</button>
@@ -422,13 +471,47 @@
   </div>
 
   
+  <!-- KEDATANGAN MODAL -->
+  <div id="kedatanganModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Update Status Kedatangan</h3>
+        <span class="close" onclick="closeKedatanganModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label><strong>Nomor Polisi:</strong> <span id="modal-plat"></span></label>
+        </div>
+        <div class="form-group">
+          <label><strong>Nama Customer:</strong> <span id="modal-nama"></span></label>
+        </div>
+        <div class="form-group">
+          <label>Status Kehadiran:</label>
+          <select id="modal-status-kehadiran" required>
+            <option value="show">Show</option>
+            <option value="no show">No Show</option>
+            <option value="reschedule">Reschedule</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Catatan (Opsional):</label>
+          <textarea id="modal-catatan" placeholder="Tambahkan catatan jika diperlukan"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeKedatanganModal()" class="btn-secondary">Batal</button>
+        <button onclick="updateKedatanganStatus()" class="btn-primary">Update Status</button>
+      </div>
+    </div>
+  </div>
+
   <div id="loadingIndicator" style="display:none;text-align:center;font-weight:bold;font-size:1.2em;margin:10px 0;">
     <span id="loadingText">MEMPROSES...</span> <span style="font-size:1.5em;">⏳</span>
   </div>
 </div>
 
 <script>
-const URL = "https://script.google.com/macros/s/AKfycbzzz6ORbGD1ffUL3i5fUXn6YQn39In67JUt1Ji3HAvgRwmAE2Mh9xA5ibwkINipe2PC/exec";
+const URL = "https://script.google.com/macros/s/AKfycbx5GdARIoUzC_qhGHwuLTMXxQhV8oN2iEwlS2QZgAjuC6__VxvrGm7zfDIuWfr-rCfH/exec";
 
 function formatDateOnly(dateStr) {
   if (!dateStr) return "";
@@ -476,15 +559,14 @@ function loadRekapSales() {
   showLoading('Memproses data rekap sales...');
   const selectedMonth = document.getElementById("rekap-sales-month").value;
   const selectedYear = document.getElementById("rekap-sales-year").value || new Date().getFullYear();
-  
- 
+
   fetch(`${URL}?action=get_all_booking`)
     .then(res => res.json())
     .then(data => {
-      
+      // Filter hanya booking via TAB
       let filtered = data.filter(row => (row.via || '').toLowerCase() === 'tab');
-      
-      
+
+      // Filter bulan/tahun jika dipilih
       if (selectedMonth) {
         filtered = filtered.filter(row => {
           const bookingDate = new Date(row.tanggal_penerimaan || row.tanggal_booking || '');
@@ -493,13 +575,91 @@ function loadRekapSales() {
           return bookingMonth === selectedMonth && bookingYear === selectedYear;
         });
       }
-      
-      renderRekapSalesTable(filtered);
-      
-      // Update chart data jika chart sedang ditampilkan
-      if (!document.getElementById('salesChartsContainer').classList.contains('hidden')) {
-        updateSalesCharts(filtered);
+
+      if (filtered.length === 0) {
+        document.getElementById("rekapSalesTableContainer").innerHTML = "<p>Tidak ada data booking</p>";
+        hideLoading();
+        return;
       }
+
+      // Agregasi per sales
+      const salesStats = {};
+      let totalShow = 0, totalNoShow = 0, totalResc = 0, totalAll = 0;
+
+      filtered.forEach(row => {
+        const salesName = (row.nama_sales || row.sales || '').toString().trim();
+        if (!salesStats[salesName]) {
+          salesStats[salesName] = { total: 0, show: 0, noshow: 0, reschedule: 0 };
+        }
+        salesStats[salesName].total++;
+        totalAll++;
+
+        const status = (row.status_kehadiran || row.keterangan || '').toLowerCase();
+        if (status === 'show') {
+          salesStats[salesName].show++;
+          totalShow++;
+        } else if (status === 'no show' || status === 'noshow') {
+          salesStats[salesName].noshow++;
+          totalNoShow++;
+        } else if (status === 'reschedule' || status === 'resc') {
+          salesStats[salesName].reschedule++;
+          totalResc++;
+        }
+      });
+
+      // Ubah ke array dan sort berdasarkan total booking (desc)
+      const sortedSales = Object.entries(salesStats)
+        .sort((a, b) => b[1].total - a[1].total);
+
+      // Ringkasan total semua sales
+      let summaryHtml = `
+        <div style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
+          <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; min-width: 120px;">
+            <strong>Show:</strong> ${totalShow}
+          </div>
+          <div style="background: #ffe8e8; padding: 15px; border-radius: 8px; min-width: 120px;">
+            <strong>No Show:</strong> ${totalNoShow}
+          </div>
+          <div style="background: #fff3e8; padding: 15px; border-radius: 8px; min-width: 120px;">
+            <strong>Reschedule:</strong> ${totalResc}
+          </div>
+          <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; min-width: 120px;">
+            <strong>Total:</strong> ${totalAll}
+          </div>
+        </div>
+      `;
+
+      // Tabel per sales (urut)
+      let tableHtml = `
+        <table border="1" style="border-collapse: collapse; width: 100%;">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Nama Sales</th>
+              <th>Total Booking</th>
+              <th>Show</th>
+              <th>No Show</th>
+              <th>Reschedule</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      let idx = 1;
+      sortedSales.forEach(([sales, stats]) => {
+        tableHtml += `
+          <tr>
+            <td>${idx++}</td>
+            <td>${sales}</td>
+            <td>${stats.total}</td>
+            <td>${stats.show}</td>
+            <td>${stats.noshow}</td>
+            <td>${stats.reschedule}</td>
+          </tr>
+        `;
+      });
+      tableHtml += "</tbody></table>";
+
+      document.getElementById("rekapSalesTableContainer").innerHTML = summaryHtml + tableHtml;
       hideLoading();
     })
     .catch(err => {
@@ -601,6 +761,252 @@ function showCustomerInfo() {
       hideLoading();
     });
 }
+
+function showTHSBookingForm() {
+  showPage("thsBookingPage");
+  document.getElementById("thsBookingForm").reset();
+}
+
+document.getElementById("thsBookingForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  const params = new URLSearchParams();
+  formData.forEach((v, k) => params.append(k, v));
+  params.append("action", "add_ths_booking");
+
+  fetch(URL, {
+    method: "POST",
+    body: params
+  })
+  .then(res => res.text())
+  .then(msg => {
+    alert(msg);
+    e.target.reset();
+    showPage('rekapSalesPage');
+  })
+  .catch(err => {
+    alert("Gagal menyimpan data THS: " + err);
+  });
+});
+
+
+function loadRekapTHS() {
+  const bulan = document.getElementById("rekap-sales-month").value;
+  const tahun = document.getElementById("rekap-sales-year").value;
+  showLoading('Memuat Rekap THS...');
+
+  fetch(`${URL}?action=get_ths&bulan=${bulan}&tahun=${tahun}`)
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById("rekapSalesTableContainer");
+
+      // Pastikan data berbentuk array
+      if (!Array.isArray(data)) {
+        alert(data.error || "Terjadi kesalahan saat mengambil data THS");
+        hideLoading();
+        return;
+      }
+
+      if (data.length === 0) {
+        container.innerHTML = "<p>Tidak ada data THS</p>";
+        hideLoading();
+        return;
+      }
+
+      // Agregasi per sales
+      const salesStats = {};
+      let totalShow = 0, totalNoShow = 0, totalResc = 0, totalAll = 0;
+
+      data.forEach(row => {
+        const salesName = (row.nama_sales || '').toString().trim();
+        if (!salesStats[salesName]) {
+          salesStats[salesName] = { total: 0, show: 0, noshow: 0, reschedule: 0 };
+        }
+        salesStats[salesName].total++;
+        totalAll++;
+
+        const ket = (row.keterangan || '').toLowerCase();
+        if (ket === 'show') {
+          salesStats[salesName].show++;
+          totalShow++;
+        } else if (ket === 'noshow' || ket === 'no show') {
+          salesStats[salesName].noshow++;
+          totalNoShow++;
+        } else if (ket === 'resc' || ket === 'reschedule') {
+          salesStats[salesName].reschedule++;
+          totalResc++;
+        }
+      });
+
+      // Ringkasan total semua sales
+      let summaryHtml = `
+        <div style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
+          <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; min-width: 120px;">
+            <strong>Show:</strong> ${totalShow}
+          </div>
+          <div style="background: #ffe8e8; padding: 15px; border-radius: 8px; min-width: 120px;">
+            <strong>No Show:</strong> ${totalNoShow}
+          </div>
+          <div style="background: #fff3e8; padding: 15px; border-radius: 8px; min-width: 120px;">
+            <strong>Reschedule:</strong> ${totalResc}
+          </div>
+          <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; min-width: 120px;">
+            <strong>Total:</strong> ${totalAll}
+          </div>
+        </div>
+      `;
+
+      // Tabel per sales
+      let tableHtml = `
+        <table border="1" style="border-collapse: collapse; width: 100%;">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Nama Sales</th>
+              <th>Total Booking</th>
+              <th>Show</th>
+              <th>No Show</th>
+              <th>Reschedule</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      let idx = 1;
+      Object.keys(salesStats).forEach(sales => {
+        tableHtml += `
+          <tr>
+            <td>${idx++}</td>
+            <td>${sales}</td>
+            <td>${salesStats[sales].total}</td>
+            <td>${salesStats[sales].show}</td>
+            <td>${salesStats[sales].noshow}</td>
+            <td>${salesStats[sales].reschedule}</td>
+          </tr>
+        `;
+      });
+      tableHtml += "</tbody></table>";
+
+      container.innerHTML = summaryHtml + tableHtml;
+      hideLoading();
+    })
+    .catch(err => {
+      alert("Gagal memuat rekap THS: " + err);
+      hideLoading();
+    });
+}
+
+function loadTotalBookingSales() {
+  showLoading('Menghitung Total Booking Sales...');
+  const bulan = document.getElementById("rekap-sales-month").value.padStart(2, "0");
+  const tahun = document.getElementById("rekap-sales-year").value;
+
+  fetch(`${URL}?action=get_booking_sales_merge&bulan=${bulan}&tahun=${tahun}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!Array.isArray(data) || data.length === 0) {
+        document.getElementById("rekapSalesTableContainer").innerHTML = "<p>Tidak ada data</p>";
+        hideLoading();
+        return;
+      }
+
+      const salesStats = {};
+      const totals = {
+        total_booking: 0,
+        total_booking_bengkel: 0,
+        total_booking_ths: 0,
+        show_bengkel: 0,
+        show_ths: 0,
+        noshow: 0,
+        resc: 0
+      };
+
+      function addStats(sales, type, status) {
+        if (!salesStats[sales]) {
+          salesStats[sales] = { ...totals };
+        }
+        salesStats[sales].total_booking++;
+        if (type === "bengkel") salesStats[sales].total_booking_bengkel++;
+        if (type === "ths") salesStats[sales].total_booking_ths++;
+
+        if (status === "show") {
+          if (type === "bengkel") salesStats[sales].show_bengkel++;
+          if (type === "ths") salesStats[sales].show_ths++;
+        } else if (status === "no show" || status === "noshow") {
+          salesStats[sales].noshow++;
+        } else if (status === "reschedule" || status === "resc") {
+          salesStats[sales].resc++;
+        }
+      }
+
+      data.forEach(row => {
+        const sales = (row.nama_sales || row.sales || "Tidak Ada").trim();
+        const status = ((row.status_kehadiran || row.keterangan) || "").toLowerCase();
+        const type = row.source_type || "bengkel";
+        addStats(sales, type, status);
+      });
+
+      // Hitung total semua kolom
+      Object.values(salesStats).forEach(s => {
+        for (let key in totals) totals[key] += s[key];
+      });
+
+      const sorted = Object.entries(salesStats).sort((a, b) => b[1].total_booking - a[1].total_booking);
+
+      let html = `<table border="1" style="border-collapse:collapse;width:100%">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama Sales</th>
+            <th>Total Booking</th>
+            <th>Total Booking Bengkel</th>
+            <th>Total Booking THS</th>
+            <th>Show Bengkel</th>
+            <th>Show THS</th>
+            <th>No Show</th>
+            <th>Reschedule</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      let idx = 1;
+      sorted.forEach(([sales, s]) => {
+        html += `<tr>
+          <td>${idx++}</td>
+          <td>${sales}</td>
+          <td>${s.total_booking}</td>
+          <td>${s.total_booking_bengkel}</td>
+          <td>${s.total_booking_ths}</td>
+          <td>${s.show_bengkel}</td>
+          <td>${s.show_ths}</td>
+          <td>${s.noshow}</td>
+          <td>${s.resc}</td>
+        </tr>`;
+      });
+
+      html += `<tr style="font-weight:bold;background:#f0f0f0">
+        <td colspan="2">TOTAL</td>
+        <td>${totals.total_booking}</td>
+        <td>${totals.total_booking_bengkel}</td>
+        <td>${totals.total_booking_ths}</td>
+        <td>${totals.show_bengkel}</td>
+        <td>${totals.show_ths}</td>
+        <td>${totals.noshow}</td>
+        <td>${totals.resc}</td>
+      </tr>`;
+
+      html += `</tbody></table>`;
+
+      document.getElementById("rekapSalesTableContainer").innerHTML = html;
+      hideLoading();
+    })
+    .catch(err => {
+      document.getElementById("rekapSalesTableContainer").innerHTML = `<p style="color:red">Error: ${err}</p>`;
+      hideLoading();
+    });
+}
+
+
+
 
 function showSalesCharts() {
   document.getElementById('rekapSalesTableContainer').innerHTML = '';
@@ -876,18 +1282,27 @@ document.getElementById("bookingForm").addEventListener("submit", function(e) {
     .then(res => res.text())
     .then(msg => {
       alert(msg);
+      
       if (isEdit) {
-        
+        // Clear edit mode
         document.getElementById("editId").value = "";
         document.getElementById("sheetName").value = "";
+        document.getElementById("statusGroup").classList.add("hidden");
+        document.getElementById("submitBtn").textContent = "Kirim";
+        
+        // Reset form and return to data page
+        form.reset();
         showPage("dataPage");
+        
+        // Reload data to show updated information
         loadData();
       } else {
-        
+        // Reset form for new booking
         form.reset();
-        
         document.getElementById("phoneInputGroup").style.display = "none";
         document.getElementById("saPhoneGroup").style.display = "none";
+        document.getElementById("customerDatangGroup").style.display = "block";
+        document.getElementById("customerDatangDropdown").style.display = "none";
       }
     })
     .catch(err => {
@@ -920,11 +1335,15 @@ function loadData() {
       data.forEach((row, idx) => {
         
         const status = row.status_kehadiran || "";
-        const displayStatus = status || "-"; 
+        // Pastikan status ditampilkan dengan benar - jangan tampilkan "-" jika ada status
+        const displayStatus = status ? status : "-"; 
+        
+        // Debug: Log status for each row
+        console.log(`Row ${idx + 1} - ID: ${row.id_row}, Status: "${status}", Display: "${displayStatus}"`);
         
         const tds = `
           <td>${idx + 1}</td>
-          <td>${displayStatus}</td>
+          <td><span class="status-${status.toLowerCase().replace(/\s+/g, '-')}">${displayStatus}</span></td>
           <td>${row.nomor_polisi || row.plat || ""}</td>
           <td>${row.tipe_kendaraan || row.tipe || ""}</td>
           <td>${row.tahun || ""}</td>
@@ -941,6 +1360,7 @@ function loadData() {
           <td>
             <button onclick='editRow(${JSON.stringify(row)})'>Edit</button>
             <button onclick='deleteRow("${row.id_row}", "${row.tanggal_penerimaan}", "${row.sheetName}", this)'>Hapus</button>
+            <button onclick='showKedatanganModal(${JSON.stringify(row)})' style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; margin-top: 2px;">Kedatangan</button>
           </td>
         `;
         const tr = document.createElement("tr");
@@ -1158,75 +1578,75 @@ function deleteMRS(id_row, btn) {
 }
 
 function editRow(row) {
-  showPage("bookingPage");
-  const form = document.getElementById("bookingForm");
-  form.plat.value = row.nomor_polisi || "";
-  document.getElementById("statusGroup").classList.remove("hidden");
-  document.getElementById("status_kehadiran_select").value = row.status_kehadiran || "show";
-  form.tipe.value = row.tipe_kendaraan || "";
-  form.tahun.value = row.tahun || "";
-  
+    showPage("bookingPage");
+    const form = document.getElementById("bookingForm");
+    form.reset();
+    
+    // Set ID dan nama sheet untuk proses update
+    form.editId.value = row.id_row;
+    form.sheetName.value = row.sheetName || "";
 
-  const tipeTelepon = row.tipe_telepon || "";
-  form.tipe_telepon.value = tipeTelepon;
-  if (tipeTelepon === "SA") {
-    document.getElementById("phoneInputGroup").style.display = "none";
-    document.getElementById("saPhoneGroup").style.display = "block";
-    document.getElementById("nohp_sa_select").value = row.no_hp || row.nohp || "";
-    document.getElementById("nohp_input").value = "";
+    // Tampilkan group status kehadiran dan isi nilainya
+    document.getElementById("statusGroup").classList.remove("hidden");
+    document.getElementById("status_kehadiran_select").value = row.status_kehadiran || "";
     
-    
-    document.getElementById("customerDatangGroup").style.display = "none";
-    document.getElementById("customerDatangDropdown").style.display = "block";
-    document.getElementById("datang_select").value = row.customer_akan_datang || row.datang || "";
-    document.getElementById("datang_input").value = "";
-  } else {
-    document.getElementById("phoneInputGroup").style.display = "block";
-    document.getElementById("saPhoneGroup").style.display = "none";
-    
-    const phoneNumber = row.no_hp || row.nohp || "";
-    const displayNumber = phoneNumber.startsWith("62") ? phoneNumber.substring(2) : phoneNumber;
-    document.getElementById("nohp_input").value = displayNumber;
-    document.getElementById("nohp_sa_select").value = "";
-    
-    
-    document.getElementById("customerDatangGroup").style.display = "block";
-    document.getElementById("customerDatangDropdown").style.display = "none";
-    document.getElementById("datang_input").value = row.customer_akan_datang || row.datang || "";
-    document.getElementById("datang_select").value = "";
-  }
-  
-  
-  let salesVal = row.nama_sales || row.sales || "";
-  const salesSelect = document.getElementById("sales_select");
-  const salesOtherInput = document.getElementById("sales_other_input");
-  if (["zen","januar","nia","avro","mila","indra","hendra","irvan","rony","stevy","osla","imron","asep aj","nadia","daulat"].includes(salesVal.toLowerCase())) {
-    salesSelect.value = salesVal.toLowerCase();
-    salesOtherInput.style.display = 'none';
-    salesOtherInput.value = '';
-  } else if (salesVal) {
-    salesSelect.value = 'other';
-    salesOtherInput.style.display = 'block';
-    salesOtherInput.value = salesVal;
-  } else {
-    salesSelect.value = '';
-    salesOtherInput.style.display = 'none';
-    salesOtherInput.value = '';
-  }
-  
-  
-  
-  form.nama.value = row.nama_customer || "";
-  form.tanggal_penerimaan.value = row.tanggal_penerimaan || "";
-  form.jam_penerimaan.value = row.jam_penerimaan || "";
-  form.via.value = row.via || "";
-  form.admin.value = row.admin || "";
-  form.keluhan.value = row.jenis_pekerjaan || "";
-  form.sales.value = row.nama_sales || "";
+    // Isi semua input form dengan data dari baris yang dipilih
+    form.plat.value = row.nomor_polisi || row.plat || "";
+    form.tipe.value = row.tipe_kendaraan || row.tipe || "";
+    form.tahun.value = row.tahun || "";
 
-  document.getElementById("editId").value = row.id_row;
-  document.getElementById("sheetName").value = row.sheetName;
-  document.getElementById("submitBtn").textContent = "Update Data";
+    // Logika untuk mengisi Tipe Telepon dan Nomor HP
+    const tipeTelepon = row.tipe_telepon || "";
+    document.getElementById("tipe_telepon").value = tipeTelepon;
+    togglePhoneInput(); 
+
+    if (tipeTelepon === "SA") {
+        document.getElementById("nohp_sa_select").value = row.no_hp || "";
+        document.getElementById("nohp_input").value = "";
+    } else {
+        document.getElementById("nohp_input").value = row.no_hp || "";
+        document.getElementById("nohp_sa_select").value = "";
+    }
+
+    // Logika untuk mengisi Customer Akan Datang
+    const datang = row.customer_akan_datang || row.datang || "";
+    if (tipeTelepon === "SA") {
+        document.getElementById("datang_select").value = datang;
+        document.getElementById("datang_input").value = "";
+    } else {
+        document.getElementById("datang_input").value = datang;
+        document.getElementById("datang_select").value = "";
+    }
+    toggleCustomerDatangInput();
+
+    form.nama.value = row.nama_customer || row.nama || "";
+    form.tanggal_penerimaan.value = formatTanggalOnly(row.tanggal_penerimaan || "");
+    form.jam_penerimaan.value = row.jam_penerimaan || "";
+    form.via.value = row.via || "";
+    form.admin.value = row.admin || "";
+    form.keluhan.value = row.jenis_pekerjaan || row.keluhan || "";
+
+    // Logika untuk mengisi Nama Sales
+    const salesVal = (row.nama_sales || row.sales || "").toLowerCase();
+    const salesSelect = document.getElementById("sales_select");
+    const otherInput = document.getElementById("sales_other_input");
+
+    if (SALES_LIST.includes(salesVal)) {
+        salesSelect.value = salesVal;
+        otherInput.style.display = "none";
+        otherInput.value = "";
+    } else if (salesVal) {
+        salesSelect.value = "other";
+        otherInput.style.display = "block";
+        otherInput.value = salesVal;
+    } else {
+        salesSelect.value = "";
+        otherInput.style.display = "none";
+        otherInput.value = "";
+    }
+    
+    // Ubah teks tombol menjadi "Update"
+    form.querySelector("#submitBtn").textContent = "Update";
 }
 
 
@@ -1440,6 +1860,102 @@ function toggleOtherSalesBooking() {
 function populateCustomerInfoSalesDropdown() {
   const select = document.getElementById('customer-info-sales');
   select.innerHTML = SALES_LIST.filter(s => s !== 'other').map(s => `<option value="${s}">${s.toUpperCase()}</option>`).join('');
+}
+
+// Kedatangan Modal Functions
+let currentKedatanganRow = null;
+
+function showKedatanganModal(row) {
+  currentKedatanganRow = row;
+  console.log('Opening modal for row:', row);
+  document.getElementById('modal-plat').textContent = row.nomor_polisi || row.plat || '';
+  document.getElementById('modal-nama').textContent = row.nama_customer || row.nama || '';
+  document.getElementById('modal-status-kehadiran').value = row.status_kehadiran || 'show';
+  document.getElementById('modal-catatan').value = '';
+  document.getElementById('kedatanganModal').classList.remove('hidden');
+}
+
+function closeKedatanganModal() {
+  document.getElementById('kedatanganModal').classList.add('hidden');
+  currentKedatanganRow = null;
+}
+
+function updateKedatanganStatus() {
+  if (!currentKedatanganRow) {
+    alert('Data tidak ditemukan!');
+    return;
+  }
+
+  const statusKehadiran = document.getElementById('modal-status-kehadiran').value;
+  const catatan = document.getElementById('modal-catatan').value;
+
+  if (!statusKehadiran) {
+    alert('Pilih status kehadiran!');
+    return;
+  }
+
+  // Debug: Log the data being sent
+  console.log('Sending kedatangan update:', {
+    id_row: currentKedatanganRow.id_row,
+    sheetName: currentKedatanganRow.sheetName,
+    status_kehadiran: statusKehadiran,
+    catatan: catatan
+  });
+  
+  // Validate data before sending
+  if (!currentKedatanganRow.id_row || !currentKedatanganRow.sheetName) {
+    alert('Data kendaraan tidak lengkap!');
+    return;
+  }
+
+  showLoading('Mengupdate status kedatangan...');
+
+  const params = new URLSearchParams();
+  params.append("action", "update_kedatangan");
+  params.append("id_row", currentKedatanganRow.id_row);
+  params.append("sheetName", currentKedatanganRow.sheetName);
+  params.append("status_kehadiran", statusKehadiran);
+  params.append("catatan", catatan);
+
+  console.log('Sending params:', params.toString());
+
+  fetch(URL, {
+    method: "POST",
+    body: params
+  })
+    .then(res => {
+      console.log('Response status:', res.status);
+      return res.text();
+    })
+    .then(msg => {
+      console.log('Server response:', msg);
+      
+      if (msg.includes('✅')) {
+        alert(msg);
+        closeKedatanganModal();
+        
+        // Immediately reload data to show updated status
+        console.log('Reloading data to show updated status...');
+        loadData();
+      } else {
+        alert(msg);
+      }
+    })
+    .catch(err => {
+      console.error('Error updating kedatangan:', err);
+      alert("Gagal mengupdate status kedatangan: " + err);
+    })
+    .finally(() => {
+      hideLoading();
+    });
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  const modal = document.getElementById('kedatanganModal');
+  if (event.target === modal) {
+    closeKedatanganModal();
+  }
 }
 
 window.onload = checkLogin;
