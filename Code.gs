@@ -12,9 +12,8 @@ const SALES_LIST = [
 
 function doGet(e) {
   const action = e.parameter.action;
-
-  if (action === "get_mrs_view") return doGetMRSView(e);
   if (action === "get_mrs") return doGetMRS(e);
+  if (action === "get_mrs_view") return getMRSView(e);
   if (action === "get_all_booking") return doGetAllBooking(e);
   if (action === "get_ths") {
     const bulan = e.parameter.bulan || "";
@@ -25,12 +24,12 @@ function doGet(e) {
   }
 
   // ✅ Endpoint baru gabungan TAB + THS
-  if (action === "get_booking_sales_merge") {
-    const bulan = e.parameter.bulan || "";
-    const tahun = e.parameter.tahun || "";
-    return ContentService.createTextOutput(
-      JSON.stringify(getBookingSalesMerge(bulan, tahun))
-    ).setMimeType(ContentService.MimeType.JSON);
+  if (action === "get_ths_sales_merge") {
+    const bulan = e.parameter.bulan;
+    const tahun = e.parameter.tahun;
+    return ContentService
+      .createTextOutput(JSON.stringify(getTHSSalesMerge(bulan, tahun)))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
   // ✅ Default: ambil data booking per tanggal
@@ -77,37 +76,65 @@ function doGet(e) {
 }
 
 function getTHSData(bulan, tahun) {
-  const folderId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1"; // ID folder parent THS
-  const parent = DriveApp.getFolderById(folderId);
-  const fileName = `THS_${tahun}_${bulan}`;
-  const files = parent.getFilesByName(fileName);
+  const parentId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1";
+  const parent = DriveApp.getFolderById(parentId);
 
+  const folderName = `THS_${tahun}_${bulan}`;
+  const folders = parent.getFoldersByName(folderName);
+  if (!folders.hasNext()) return [];
+
+  const folder = folders.next();
+  const files = folder.getFilesByName(folderName);
   if (!files.hasNext()) return [];
 
   const ss = SpreadsheetApp.open(files.next());
-  const sheet = ss.getSheets()[0]; // Ambil sheet pertama, atau ganti sesuai nama pasti
+
+  const bulanNamaMap = {
+    "01": "JANUARI", "02": "FEBRUARI", "03": "MARET", "04": "APRIL",
+    "05": "MEI", "06": "JUNI", "07": "JULI", "08": "AGUSTUS",
+    "09": "SEPTEMBER", "10": "OKTOBER", "11": "NOVEMBER", "12": "DESEMBER"
+  };
+  const bulanNama = bulanNamaMap[bulan] || bulan;
+
+  const sheetName = `THS_${bulanNama}`;
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return [];
+
   const data = sheet.getDataRange().getValues();
-  const headers = data[0];
+  const headers = data[0].map(h => h.toString().trim());
   const result = [];
 
   for (let i = 1; i < data.length; i++) {
+    if (data[i].join("").trim() === "") continue;
     const row = {};
     for (let j = 0; j < headers.length; j++) {
       let val = data[i][j];
       if (val instanceof Date) val = val.toISOString();
       row[headers[j].toLowerCase().replace(/ /g, "_")] = val;
     }
-    // Pastikan ada field untuk dikenali frontend
     row.source_type = "ths";
+    if (!row.id_unik) row.id_unik = `ths_${tahun}${bulan}_${i}`;
     result.push(row);
   }
-
   return result;
 }
 
 
+function getTHSSalesMerge(bulan, tahun) {
+  // Ambil data THS saja dari folder THS_TAHUN_BULAN
+  const thsData = getTHSData(bulan, tahun); // sudah ada id_unik & source_type
+  
+  return thsData.map((row, idx) => ({
+    ...row,
+    id_unik: row.id_unik || `ths_${tahun}${bulan}_${idx + 1}`,
+    source_type: "ths"
+  }));
+}
+
+
 function getBookingSalesMerge(bulan, tahun) {
-  let tabData = getAllBookingData().filter(row => (row.via || "").toLowerCase() === "tab");
+  let tabData = getAllBookingData()
+    .filter(row => (row.via || "").toLowerCase() === "tab");
 
   if (bulan && tahun) {
     tabData = tabData.filter(row => {
@@ -116,126 +143,119 @@ function getBookingSalesMerge(bulan, tahun) {
     });
   }
 
-  const thsData = getTHSData(bulan, tahun);
-
-  const tabWithType = tabData.map(row => {
+  // Tambahkan id_unik untuk TAB
+  const tabWithType = tabData.map((row, idx) => {
     row.source_type = "bengkel";
+    row.id_unik = `tab_${tahun}${bulan}_${idx + 1}`;
     return row;
   });
 
-  const thsWithType = thsData.map(row => {
-    row.source_type = "ths";
-    return row;
-  });
+  const thsWithType = getTHSData(bulan, tahun); // sudah ada id_unik
 
   return [...tabWithType, ...thsWithType];
 }
 
 
-function doGetMRSView(e) {
-  var bulan = e.parameter.bulan; // Contoh: 'Mei'
-  var tahun = e.parameter.tahun; // Contoh: '2025'
+function getMRSView(e) {
+  const bulan = parseInt(e.parameter.bulan, 10);
+  const tahun = parseInt(e.parameter.tahun, 10);
+
   if (!bulan || !tahun) {
-    return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ current: [], previous: [] }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
-  // Nama file dan sheet
-  var monthNum = getMonthNumber(bulan); // 'Mei' -> '05'
-  var fileName = 'Booking_' + tahun + '_' + monthNum;
-  var sheetName = 'MRS_' + bulan;
-
-  // Cari file di Google Drive
-  var files = DriveApp.getFilesByName(fileName);
-  if (!files.hasNext()) {
-    return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
-  }
-  var file = files.next();
-  var ss = SpreadsheetApp.open(file);
-  var sheet = ss.getSheetByName(sheetName);
-  if (!sheet) {
-    return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+  // Hitung bulan sebelumnya
+  let prevMonth = bulan - 1;
+  let prevYear = tahun;
+  if (prevMonth < 1) {
+    prevMonth = 12;
+    prevYear -= 1;
   }
 
-  var data = sheet.getDataRange().getValues();
-  var result = [];
-  for (var i = 1; i < data.length; i++) { // Mulai dari 1, skip header
+  // Ambil data bulan sekarang dan sebelumnya
+  const currentData = readMRSFile(tahun, bulan);
+  const prevData = readMRSFile(prevYear, prevMonth);
+
+  const result = {
+    current: currentData,
+    previous: prevData
+  };
+
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Ambil data dari file Booking_{tahun}_{bulan}
+ * bulan dalam angka (1-12)
+ */
+function readMRSFile(tahun, bulan) {
+  const monthStr = bulan.toString().padStart(2, "0");
+  const fileName = `Booking_${tahun}_${monthStr}`;
+  const sheetName = `MRS_${getMonthName(bulan)}`;
+
+  const files = DriveApp.getFilesByName(fileName);
+  if (!files.hasNext()) return [];
+
+  const file = files.next();
+  const ss = SpreadsheetApp.open(file);
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return [];
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0]; // Get headers from the first row
+  const result = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const rowData = data[i];
     result.push({
-      id_row: i + 1, // baris di sheet (1-based, +1 karena header)
-      nomor_polisi: data[i][0],
-      bulan: data[i][1],
-      ch: data[i][2],
-      nama_customer: data[i][3],
-      no_hp: data[i][4]
+      id_row: i + 1, // Store the 1-based row index
+      nomor_polisi: rowData[0],
+      bulan: rowData[1],
+      ch: rowData[2],
+      nama_customer: rowData[3],
+      no_hp: rowData[4],
+      status: rowData[5],
+      catatan: rowData[6],
+      admin_update: rowData[7],
+      tanggal_update: rowData[8]
     });
   }
-  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+  return result;
 }
 
-// Helper: Ubah nama bulan ke angka 2 digit
-function getMonthNumber(bulan) {
-  var bulanMap = {
-    'Januari': '01', 'Februari': '02', 'Maret': '03', 'April': '04',
-    'Mei': '05', 'Juni': '06', 'Juli': '07', 'Agustus': '08',
-    'September': '09', 'Oktober': '10', 'November': '11', 'Desember': '12'
-  };
-  return bulanMap[bulan] || '01';
+// Helper: nomor bulan → nama bulan
+function getMonthName(num) {
+  const bulanMap = [
+    '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+  return bulanMap[num] || '';
 }
 
-function doGetMRS(e) {
-  const month = e.parameter.month;
-  
-  try {
-    const mrsSS = getMRSSpreadsheet();
-    const sheet = mrsSS.getSheetByName("MRS_Data");
-    if (!sheet) return ContentService.createTextOutput("[]").setMimeType(ContentService.MimeType.JSON);
-    
-    const data = sheet.getDataRange().getValues();
-    const headers = data[0];
-    const result = [];
-    
-    for (let i = 1; i < data.length; i++) {
-      const row = {};
-      for (let j = 0; j < headers.length; j++) {
-        let val = data[i][j];
-        if (val instanceof Date) val = val.toISOString();
-        row[headers[j].toLowerCase().replace(/ /g, "_")] = val;
-      }
-      row.id_row = data[i][0];
-      result.push(row);
-    }
-    
-    // Filter by month if specified
-    if (month && month !== "") {
-      const filteredResult = result.filter(row => row.reminder_bulan === month);
-      return ContentService.createTextOutput(JSON.stringify(filteredResult)).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (error) {
-    return ContentService.createTextOutput("[]").setMimeType(ContentService.MimeType.JSON);
-  }
-}
 
 function doPost(e) {
   const p = e.parameter;
   const action = e.parameter.action;
 
-  // Handle different actions
-  if (action === "add_ths_booking") return addTHSBooking(e);
+  // === Handle Booking THS ===
+  if (action === "add_ths_booking") return doAddTHS(e);
   if (action === "edit_ths_booking") return editTHSBooking(e);
   if (action === "delete_ths_booking") return deleteTHSBooking(e);
 
-   
+  // === Handle MRS ===
+  if (action === "update_mrs_status") return doUpdateMRSStatus(e);
+  if (action === "add_mrs") return doAddMRSV3(e);
+  if (action === "delete_mrs") return doDeleteMRS(e);
 
-  if (p.action === "delete") return doDelete(e);
-  if (p.action === "edit") return doEdit(e);
-  if (p.action === "export_rekap") return doExportRekap(e);
-  if (p.action === "add_mrs") return doAddMRSV3(e);
-  if (p.action === "delete_mrs") return doDeleteMRS(e);
-  if (p.action === "update_sales_rekap") return ContentService.createTextOutput(updateRekapSalesSheet(p));
-  if (p.action === "export_rekap_sales") return ContentService.createTextOutput(exportRekapSalesSheet(p));
-  if (p.action === "update_kedatangan") return doUpdateKedatangan(e);
+  // === Handle Booking Umum ===
+  if (action === "delete") return doDelete(e);
+  if (action === "edit") return doEdit(e);
+  if (action === "export_rekap") return doExportRekap(e);
+  if (action === "update_sales_rekap") return ContentService.createTextOutput(updateRekapSalesSheet(p));
+  if (action === "export_rekap_sales") return ContentService.createTextOutput(exportRekapSalesSheet(p));
+  if (action === "update_kedatangan") return doUpdateKedatangan(e);
 
   // === TAMBAH BOOKING ===
   const tglBooking = formatTanggalLengkap(new Date());
@@ -277,54 +297,94 @@ function doPost(e) {
   return ContentService.createTextOutput("✅ Data berhasil ditambahkan.");
 }
 
+function updateMRSStatusHandler(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("MRS");
+
+  const idRow = Number(e.parameter.id_row);
+  const status = e.parameter.status;
+  const catatan = e.parameter.catatan || "";
+  const admin = e.parameter.admin || "";
+  const tanggalUpdate = Utilities.formatDate(new Date(), "Asia/Jakarta", "dd/MM/yyyy HH:mm");
+
+  if (!idRow || !status) {
+    return ContentService.createTextOutput("❌ ID Row atau Status tidak valid")
+      .setMimeType(ContentService.MimeType.TEXT)
+      .setHeader("Access-Control-Allow-Origin", "*");
+  }
+
+  // === Pastikan kolom sesuai struktur sheet MRS ===
+  // Misalnya: Kolom F = Status, G = Catatan, H = Admin, I = Tanggal Update
+  sheet.getRange(idRow, 6).setValue(status);
+  sheet.getRange(idRow, 7).setValue(catatan);
+  sheet.getRange(idRow, 8).setValue(admin);
+  sheet.getRange(idRow, 9).setValue(tanggalUpdate);
+
+  return ContentService.createTextOutput("✅ Status MRS berhasil diperbarui")
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeader("Access-Control-Allow-Origin", "*");
+}
+
 function doAddTHS(e) {
   const p = e.parameter;
-  const tahun = new Date(p.tanggal_penerimaan).getFullYear();
-  const bulan = String(new Date(p.tanggal_penerimaan).getMonth() + 1).padStart(2, '0');
-  
-  // Nama bulan untuk sheet
+  const tgl = new Date(p.tanggal_penerimaan);
+  const tahun = tgl.getFullYear();
+  const bulan = String(tgl.getMonth() + 1).padStart(2, '0');
+
   const bulanNamaMap = {
     "01": "JANUARI", "02": "FEBRUARI", "03": "MARET", "04": "APRIL",
     "05": "MEI", "06": "JUNI", "07": "JULI", "08": "AGUSTUS",
     "09": "SEPTEMBER", "10": "OKTOBER", "11": "NOVEMBER", "12": "DESEMBER"
   };
   const bulanNama = bulanNamaMap[bulan];
-  
-  // 1. Ambil folder bulan Booking_YYYY_MM
-  const parentId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1"; // GANTI dgn ID folder root Booking Kendaraan
+
+  // === UBAH: simpan di folder THS_TAHUN_BULAN ===
+  const parentId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1";
   const parent = DriveApp.getFolderById(parentId);
-  const folderName = `Booking_${tahun}_${bulan}`;
-  const folders = parent.getFoldersByName(folderName);
-  if (!folders.hasNext()) {
-    return ContentService.createTextOutput(`❌ Folder ${folderName} tidak ditemukan`);
-  }
-  const folder = folders.next();
+  const folderName = `THS_${tahun}_${bulan}`;
   
-  // 2. Ambil spreadsheet Booking_YYYY_MM
+  let folder;
+  let folders = parent.getFoldersByName(folderName);
+  if (folders.hasNext()) {
+    folder = folders.next();
+  } else {
+    folder = parent.createFolder(folderName);
+  }
+
+  // === UBAH: spreadsheet juga pakai nama THS_TAHUN_BULAN ===
+  let spreadsheet;
   const files = folder.getFilesByName(folderName);
-  if (!files.hasNext()) {
-    return ContentService.createTextOutput(`❌ Spreadsheet ${folderName} tidak ditemukan`);
+  if (files.hasNext()) {
+    spreadsheet = SpreadsheetApp.open(files.next());
+  } else {
+    const ss = SpreadsheetApp.create(folderName);
+    folder.addFile(DriveApp.getFileById(ss.getId()));
+    DriveApp.getRootFolder().removeFile(DriveApp.getFileById(ss.getId())); // pindahkan
+    spreadsheet = ss;
   }
-  const spreadsheet = SpreadsheetApp.open(files.next());
-  
-  // 3. Sheet THS_[BULAN]
+
   const sheetName = `THS_${bulanNama}`;
   let thsSheet = spreadsheet.getSheetByName(sheetName);
   if (!thsSheet) {
     thsSheet = spreadsheet.insertSheet(sheetName);
-    thsSheet.appendRow(["Nama Sales", "Nomor Polisi", "Keterangan", "Tanggal Penerimaan"]);
+    thsSheet.appendRow(["ID Unik", "Nama Sales", "Nomor Polisi", "Keterangan", "Tanggal Penerimaan"]);
   }
-  
-  // 4. Tambahkan data
+
+  const idUnik = `ths_${tahun}${bulan}_${Date.now()}`;
   thsSheet.appendRow([
+    idUnik,
     p.nama_sales,
     p.nopol,
     p.keterangan,
     p.tanggal_penerimaan
   ]);
-  
-  return ContentService.createTextOutput("✅ Data THS berhasil ditambahkan.");
+
+  return ContentService.createTextOutput(JSON.stringify({
+    status: "success",
+    message: "✅ Data THS berhasil ditambahkan.",
+    id_unik: idUnik
+  })).setMimeType(ContentService.MimeType.JSON);
 }
+
 
 
 function getFolderByName(name) {
@@ -675,9 +735,20 @@ function doAddMRSV3(e) {
   const p = e.parameter;
   const tahun = p.tahun || new Date().getFullYear();
   const bulanInput = p.reminder_month;
+
   const bulanMap = {
-    "Januari": "01", "Februari": "02", "Maret": "03", "April": "04", "Mei": "05", "Juni": "06",
-    "Juli": "07", "Agustus": "08", "September": "09", "Oktober": "10", "November": "11", "Desember": "12"
+    "Januari": "01",
+    "Februari": "02",
+    "Maret": "03",
+    "April": "04",
+    "Mei": "05",
+    "Juni": "06",
+    "Juli": "07",
+    "Agustus": "08",
+    "September": "09",
+    "Oktober": "10",
+    "November": "11",
+    "Desember": "12"
   };
   const bulanAngka = bulanMap[bulanInput];
   if (!bulanAngka) return ContentService.createTextOutput("❌ Bulan tidak valid");
@@ -716,42 +787,149 @@ function doAddMRSV3(e) {
     } else {
       mrsSheet = spreadsheet.insertSheet(sheetName, 0);
     }
-    mrsSheet.appendRow(["Nomor Polisi", "Bulan", "CH", "Nama Customer", "No HP"]);
+    mrsSheet.appendRow(["Nomor Polisi", "Bulan", "CH", "Nama Customer", "No HP", "Status", "Catatan", "Admin Update", "Tanggal Update"]); // Added "Admin Update" and "Tanggal Update"
   } else {
     spreadsheet.setActiveSheet(mrsSheet);
     spreadsheet.moveActiveSheet(0);
   }
 
-  // 4. Tambahkan data
+  // 4. Tambahkan data dengan status default
+  const adminUpdate = p.admin_update || ""; // Assuming admin_update might come from the parameter
+  const tanggalUpdate = Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd HH:mm:ss"); // Auto-generate current timestamp
+
   mrsSheet.appendRow([
     p.plat_mrs,
     bulanInput,
     p.ch_mrs,
     p.nama_customer_mrs,
-    p.nohp_mrs
+    p.nohp_mrs,
+    "Belum Dihubungi", // status default
+    "", // catatan kosong
+    adminUpdate, // Admin Update
+    tanggalUpdate // Tanggal Update
   ]);
 
   return ContentService.createTextOutput("✅ Data MRS berhasil ditambahkan.");
 }
 
+function doUpdateMRSStatus(e) {
+  const p = e.parameter;
+  const tahun = p.tahun || new Date().getFullYear();
+  const bulanInput = p.bulan;
+  const idRow = parseInt(p.id_row, 10); // baris di sheet (1-based index)
+
+  const bulanMap = {
+    "Januari": "01",
+    "Februari": "02",
+    "Maret": "03",
+    "April": "04",
+    "Mei": "05",
+    "Juni": "06",
+    "Juli": "07",
+    "Agustus": "08",
+    "September": "09",
+    "Oktober": "10",
+    "November": "11",
+    "Desember": "12"
+  };
+  const bulanAngka = bulanMap[bulanInput];
+  if (!bulanAngka) return ContentService.createTextOutput("❌ Bulan tidak valid");
+
+  // 1. Akses folder + spreadsheet sesuai bulan & tahun
+  const folderName = `Booking_${tahun}_${bulanAngka}`;
+  const parentId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1";
+  const parent = DriveApp.getFolderById(parentId);
+  const folders = parent.getFoldersByName(folderName);
+  if (!folders.hasNext()) return ContentService.createTextOutput("❌ Folder tidak ditemukan");
+  const folder = folders.next();
+
+  const files = folder.getFilesByName(folderName);
+  if (!files.hasNext()) return ContentService.createTextOutput("❌ Spreadsheet tidak ditemukan");
+  const ss = SpreadsheetApp.open(files.next());
+
+  const sheetName = "MRS_" + bulanInput.toUpperCase();
+  const mrsSheet = ss.getSheetByName(sheetName);
+  if (!mrsSheet) return ContentService.createTextOutput("❌ Sheet MRS tidak ditemukan");
+
+  // 2. Update status, catatan, dan tanggal update
+  const status = p.status || "";
+  const catatan = p.catatan || "";
+  let tanggalUpdate = p.tanggal_update || "";
+  const adminUpdate = p.admin_update || ""; // Assuming admin_update might come from the parameter
+
+  if (status === "Sudah Dihubungi" && !tanggalUpdate) {
+    tanggalUpdate = Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd HH:mm:ss");
+  }
+
+  // Ensure idRow is valid and within sheet bounds
+  if (idRow < 2 || idRow > mrsSheet.getLastRow()) { // Start from row 2 because row 1 is headers
+    return ContentService.createTextOutput("❌ ID baris tidak valid");
+  }
+
+  mrsSheet.getRange(idRow, 6).setValue(status); // kolom Status
+  mrsSheet.getRange(idRow, 7).setValue(catatan); // kolom Catatan
+  mrsSheet.getRange(idRow, 8).setValue(adminUpdate); // kolom Admin Update
+  mrsSheet.getRange(idRow, 9).setValue(tanggalUpdate); // kolom Tanggal Update
+
+  return ContentService.createTextOutput("✅ Status MRS berhasil diperbarui");
+}
+
+
 function doDeleteMRS(e) {
-  const { id_row } = e.parameter;
-  
+  const p = e.parameter;
+  const tahun = p.tahun;
+  const bulanInput = p.bulan;
+  const idRow = parseInt(p.id_row, 10); // baris di sheet (1-based index)
+
+  if (!tahun || !bulanInput || !idRow) {
+    return ContentService.createTextOutput("❌ Parameter 'tahun', 'bulan', dan 'id_row' harus disediakan.");
+  }
+
+  const bulanMap = {
+    "Januari": "01",
+    "Februari": "02",
+    "Maret": "03",
+    "April": "04",
+    "Mei": "05",
+    "Juni": "06",
+    "Juli": "07",
+    "Agustus": "08",
+    "September": "09",
+    "Oktober": "10",
+    "November": "11",
+    "Desember": "12"
+  };
+  const bulanAngka = bulanMap[bulanInput];
+  if (!bulanAngka) return ContentService.createTextOutput("❌ Bulan tidak valid");
+
   try {
-    const mrsSS = getMRSSpreadsheet();
-    const sheet = mrsSS.getSheetByName("MRS_Data");
-    const data = sheet.getDataRange().getValues();
-    const rowIdx = data.findIndex(row => row[0] === id_row);
-    
-    if (rowIdx === -1 || rowIdx < 1) {
-      return ContentService.createTextOutput("❌ Data MRS tidak ditemukan");
+    // 1. Akses folder + spreadsheet sesuai bulan & tahun
+    const folderName = `Booking_${tahun}_${bulanAngka}`;
+    const parentId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1";
+    const parent = DriveApp.getFolderById(parentId);
+    const folders = parent.getFoldersByName(folderName);
+    if (!folders.hasNext()) return ContentService.createTextOutput("❌ Folder tidak ditemukan");
+    const folder = folders.next();
+
+    const files = folder.getFilesByName(folderName);
+    if (!files.hasNext()) return ContentService.createTextOutput("❌ Spreadsheet tidak ditemukan");
+    const ss = SpreadsheetApp.open(files.next());
+
+    const sheetName = "MRS_" + bulanInput.toUpperCase();
+    const mrsSheet = ss.getSheetByName(sheetName);
+    if (!mrsSheet) return ContentService.createTextOutput("❌ Sheet MRS tidak ditemukan");
+
+    // Ensure idRow is valid and within sheet bounds, and not deleting the header row
+    if (idRow < 2 || idRow > mrsSheet.getLastRow()) {
+      return ContentService.createTextOutput("❌ ID baris tidak valid atau mencoba menghapus header.");
     }
-    
-    sheet.deleteRow(rowIdx + 1);
-    return ContentService.createTextOutput("✅ Data MRS berhasil dihapus");
-    
+
+    // 2. Hapus baris berdasarkan idRow
+    mrsSheet.deleteRow(idRow);
+
+    return ContentService.createTextOutput("✅ Data MRS berhasil dihapus.");
   } catch (error) {
-    return ContentService.createTextOutput(`❌ Error: ${error.toString()}`);
+    return ContentService.createTextOutput("❌ Gagal menghapus data MRS: " + error.message);
   }
 }
 
