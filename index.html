@@ -248,7 +248,6 @@
       <button onclick="loadRekapSales()" class="card-btn" style="margin: 10px;">VIEW REKAP</button>
       <button onclick="showPage('infoCustomerPage')" class="card-btn" style="margin: 10px;">VIEW INFO CUSTOMER</button>
       <button onclick="showPage('thsBookingPage')" class="card-btn" style="margin: 10px;">Booking THS</button>
-      <button onclick="showPage('deleteThsBookingPage')" class="card-btn" style="margin: 10px; background:#dc3545; color:white;">Delete THS</button>
       <button onclick="loadRekapTHS()" class="card-btn" style="margin: 10px;">VIEW REKAP SALES by THS</button>
       <button onclick="showSalesCharts()" class="card-btn" style="margin: 10px;">LIHAT GRAFIK</button>
       <button onclick="updateSalesRekapSpreadsheet()" class="card-btn" style="margin: 10px; background: #28a745;">UPDATE SPREADSHEET</button>
@@ -317,60 +316,6 @@
     <button type="submit">Simpan</button>
   </form>
 </div>
-
-<!-- DELETE THS PAGE -->
-<div id="deleteThsBookingPage" class="hidden">
-  <button onclick="showPage('rekapSalesPage')">&larr; Kembali</button>
-  <h3>Delete Data THS</h3>
-
-  <label>Pilih Bulan: 
-    <select id="delete-ths-month">
-      <option value="">Semua Bulan</option>
-      <option value="01">Januari</option>
-      <option value="02">Februari</option>
-      <option value="03">Maret</option>
-      <option value="04">April</option>
-      <option value="05">Mei</option>
-      <option value="06">Juni</option>
-      <option value="07">Juli</option>
-      <option value="08">Agustus</option>
-      <option value="09">September</option>
-      <option value="10">Oktober</option>
-      <option value="11">November</option>
-      <option value="12">Desember</option>
-    </select>
-  </label>
-
-  <label>Tahun: 
-    <input type="number" id="delete-ths-year" min="2020" max="2100" value="2025" style="width:80px;" />
-  </label>
-
-  <label>Nama Sales:
-    <select id="delete-ths-sales">
-      <option value="">-- Pilih Sales --</option>
-      <option value="Zen">Zen</option>
-      <option value="Nia">Nia</option>
-      <option value="Avro">Avro</option>
-      <option value="Januar">Januar</option>
-      <option value="Mila">Mila</option>
-      <option value="Indra">Indra</option>
-      <option value="Hendra">Hendra</option>
-      <option value="Irvan">Irvan</option>
-      <option value="Rony">Rony</option>
-      <option value="Stevy">Stevy</option>
-      <option value="Osla">Osla</option>
-      <option value="Imron">Imron</option>
-      <option value="Asep AJ">Asep AJ</option>
-      <option value="Nadia">Nadia</option>
-      <option value="Daulat">Daulat</option>
-    </select>
-  </label>
-
-  <button onclick="loadTHSForDelete()">Tampilkan Data</button>
-
-  <div id="deleteThsTableContainer" style="margin-top:20px;"></div>
-</div>
-
 
   <!-- MRS (Maintenance Reminder System) -->
   <div id="mrsPage" class="hidden">
@@ -579,7 +524,7 @@
 </div>
 
 <script>
-const URL = "https://script.google.com/macros/s/AKfycbx1KoCcW8CpbGhzs31FDADWq6kG2offrJxYOrAaekzr-tAaqGFX7ljqWXDOa9M7DUM-/exec";
+const URL = "https://script.google.com/macros/s/AKfycbxBKzjeDrF69wIP5tJqGYubQ63W0e7r7LQYTWvACApKu9cGLMq9zZXc0I5DH1_VvWq4/exec";
 
 function formatDateOnly(dateStr) {
   if (!dateStr) return "";
@@ -835,84 +780,6 @@ function toggleOtherSalesInput(select, idx) {
   }
 }
 
-function loadTHSForDelete() {
-  const bulan = document.getElementById("delete-ths-month").value;
-  const tahun = document.getElementById("delete-ths-year").value;
-  const sales = document.getElementById("delete-ths-sales").value;
-
-  fetch(`${URL}?action=get_ths_booking&bulan=${bulan}&tahun=${tahun}&sales=${encodeURIComponent(sales)}`)
-    .then(res => res.json())
-    .then(data => {
-      if (!Array.isArray(data) || data.length === 0) {
-        document.getElementById("deleteThsTableContainer").innerHTML = "<p>Tidak ada data.</p>";
-        return;
-      }
-
-      let html = `<table border="1" style="border-collapse:collapse;width:100%">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Nama Sales</th>
-            <th>No Polisi</th>
-            <th>Keterangan</th>
-            <th>Tanggal</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>`;
-
-      data.forEach((row, i) => {
-        html += `<tr>
-          <td>${i + 1}</td>
-          <td>${row.nama_sales}</td>
-          <td>${row.nopol}</td>
-          <td>${row.keterangan}</td>
-          <td>${row.tanggal_penerimaan}</td>
-          <td><button onclick="deleteTHSBooking('${row.id_unik}')">Hapus</button></td>
-        </tr>`;
-      });
-
-      html += `</tbody></table>`;
-      document.getElementById("deleteThsTableContainer").innerHTML = html;
-    });
-}
-
-function deleteTHSBooking(e) {
-  const idUnik = e.parameter.id_unik;
-  if (!idUnik) {
-    return ContentService.createTextOutput(
-      JSON.stringify({ status: "error", message: "ID unik tidak diberikan" })
-    ).setMimeType(ContentService.MimeType.JSON);
-  }
-
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName("THS");
-  const data = sheet.getDataRange().getValues();
-
-  // Cari index kolom ID Unik dari header
-  const headers = data[0];
-  const idxIdUnik = headers.indexOf("ID Unik");
-  if (idxIdUnik === -1) {
-    return ContentService.createTextOutput(
-      JSON.stringify({ status: "error", message: "Kolom ID Unik tidak ditemukan" })
-    ).setMimeType(ContentService.MimeType.JSON);
-  }
-
-  for (let i = 1; i < data.length; i++) {
-    if (String(data[i][idxIdUnik]) === String(idUnik)) {
-      sheet.deleteRow(i + 1);
-      return ContentService.createTextOutput(
-        JSON.stringify({ status: "success", deleted_id: idUnik, message: "Data THS berhasil dihapus" })
-      ).setMimeType(ContentService.MimeType.JSON);
-    }
-  }
-
-  return ContentService.createTextOutput(
-    JSON.stringify({ status: "error", message: "Data dengan ID unik tersebut tidak ditemukan" })
-  ).setMimeType(ContentService.MimeType.JSON);
-}
-
-
 function showCustomerInfo() {
   showLoading('Memproses data info customer...');
   const selectedMonth = document.getElementById("rekap-sales-month").value;
@@ -1083,34 +950,13 @@ function loadRekapTHS() {
 function loadTotalBookingSales() {
   const bulan = document.getElementById("rekap-sales-month").value.padStart(2, "0");
   const tahun = document.getElementById("rekap-sales-year").value;
+  showLoading('Memuat Total Booking Sales...'); 
 
-  // Validasi: bulan & tahun harus dipilih
-  if (!bulan || bulan === "00" || !tahun) {
-    alert("Pilih bulan dan tahun terlebih dahulu!");
-    document.getElementById("salesSummaryContainer").style.display = "none";
-    document.getElementById("rekapSalesTableContainer").innerHTML = "";
-    return;
-  }
-
-  // Kosongkan tabel lama sebelum loading
-  document.getElementById("rekapSalesTableContainer").innerHTML = "";
-  document.getElementById("salesSummaryContainer").style.display = "block";
-
-  showLoading('Memproses data booking sales...');
-
-  // Fetch data yang sudah difilter bulan/tahun
   fetch(`${URL}?action=get_booking_sales_merge&bulan=${bulan}&tahun=${tahun}`)
     .then(res => res.json())
     .then(data => {
-      hideLoading();
-
       if (!Array.isArray(data)) {
         throw new Error("Data bukan array, cek backend!");
-      }
-
-      if (data.length === 0) {
-        document.getElementById("rekapSalesTableContainer").innerHTML = "<p>Tidak ada data untuk periode ini.</p>";
-        return;
       }
 
       const salesStats = {};
@@ -1126,16 +972,23 @@ function loadTotalBookingSales() {
         resc_ths: 0
       };
 
+      // Fungsi normalisasi nama untuk kunci penggabungan
       function normalizeName(name) {
         return name.trim().toLowerCase();
       }
+
+      // Fungsi format nama untuk tampilan
       function formatName(name) {
-        return name.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+        return name
+          .trim()
+          .toLowerCase()
+          .replace(/\b\w/g, c => c.toUpperCase());
       }
+
       function addStats(key, displayName, type, status) {
         if (!salesStats[key]) {
           salesStats[key] = { 
-            displayName,
+            displayName: displayName,
             total_booking: 0,
             total_booking_bengkel: 0,
             total_booking_ths: 0,
@@ -1147,6 +1000,7 @@ function loadTotalBookingSales() {
             resc_ths: 0
           };
         }
+
         salesStats[key].total_booking++;
         if (type === "bengkel") salesStats[key].total_booking_bengkel++;
         else if (type === "ths") salesStats[key].total_booking_ths++;
@@ -1174,10 +1028,12 @@ function loadTotalBookingSales() {
         addStats(salesKey, displayName, type, status);
       });
 
+      // Hitung total semua kolom
       Object.values(salesStats).forEach(s => {
         for (let key in totals) totals[key] += s[key];
       });
 
+      // Urutkan berdasarkan total booking
       const sorted = Object.entries(salesStats).sort((a, b) => b[1].total_booking - a[1].total_booking);
 
       let html = `<table border="1" style="border-collapse:collapse;width:100%">
@@ -1215,6 +1071,7 @@ function loadTotalBookingSales() {
         </tr>`;
       });
 
+      // TOTAL BARIS BAWAH
       html += `<tr style="font-weight:bold;background:#f0f0f0">
         <td colspan="2">TOTAL</td>
         <td>${totals.total_booking}</td>
@@ -1226,15 +1083,19 @@ function loadTotalBookingSales() {
         <td>${totals.noshow_ths}</td>
         <td>${totals.resc_bengkel}</td>
         <td>${totals.resc_ths}</td>
-      </tr></tbody></table>`;
+      </tr>`;
+
+      html += `</tbody></table>`;
 
       document.getElementById("rekapSalesTableContainer").innerHTML = html;
+      hideLoading();
     })
     .catch(err => {
-      hideLoading();
       document.getElementById("rekapSalesTableContainer").innerHTML = `<p style="color:red">Error: ${err}</p>`;
+      hideLoading();
     });
 }
+
 
 
 

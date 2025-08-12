@@ -32,6 +32,14 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
+    if (action === "get_booking_sales_merge") {
+    const bulan = e.parameter.bulan || "";
+    const tahun = e.parameter.tahun || "";
+    return ContentService
+      .createTextOutput(JSON.stringify(getBookingSalesMerge(bulan, tahun)))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   // ✅ Default: ambil data booking per tanggal
   const tanggal = e.parameter.tanggal_penerimaan;
   if (!tanggal) {
@@ -117,6 +125,52 @@ function getTHSData(bulan, tahun) {
     result.push(row);
   }
   return result;
+}
+
+function getBookingSalesMerge(bulan, tahun) {
+  // Ambil data dari booking bengkel via TAB
+  let tabData = getAllBookingData()
+    .filter(row => (row.via || "").toLowerCase() === "tab");
+
+  if (bulan && tahun) {
+    tabData = tabData.filter(row => {
+      const d = new Date(row.tanggal_penerimaan || row.tanggal_booking || "");
+      return (d.getMonth() + 1).toString().padStart(2, "0") === bulan &&
+             d.getFullYear().toString() === tahun;
+    });
+  }
+
+  // Tambahkan id_unik untuk TAB
+  const tabWithType = tabData.map((row, idx) => {
+    row.source_type = "bengkel";
+    row.id_unik = `tab_${tahun}${bulan}_${idx + 1}`;
+    return row;
+  });
+
+  // Ambil data THS sesuai bulan & tahun
+  const thsWithType = getTHSData(bulan, tahun).map((row, idx) => {
+    row.source_type = "ths";
+    if (!row.id_unik) row.id_unik = `ths_${tahun}${bulan}_${idx + 1}`;
+    return row;
+  });
+
+  // Gabungkan tanpa duplikat berdasarkan id_unik
+  const mergedMap = {};
+  [...tabWithType, ...thsWithType].forEach(item => {
+    if (!mergedMap[item.id_unik]) {
+      mergedMap[item.id_unik] = item;
+    }
+  });
+
+  // Normalisasi nama sales
+  Object.values(mergedMap).forEach(item => {
+    let rawName = (item.nama_sales || item.sales || "").trim();
+    if (!rawName) rawName = "Tanpa Nama";
+    item.nama_sales_key = rawName.toLowerCase(); // untuk penggabungan
+    item.nama_sales = rawName.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()); // untuk tampilan
+  });
+
+  return Object.values(mergedMap);
 }
 
 
