@@ -21,7 +21,7 @@
   <!-- DASHBOARD -->
   <div id="dashboardPage" class="hidden">
     <button class="logout-btn" onclick="logout()">Logout</button>
-    <h2>Dashboard</h2>
+    <h2>Dashnnboard</h2>
     <div class="dashboard-menu">
       <button class="card-btn" onclick="showNewBookingForm()">Booking Kendaraan</button>
       <button class="card-btn" onclick="showPage('dataPage')">Data Booking</button>
@@ -139,39 +139,51 @@
   </div>
 
   <!-- DATA -->
-  <div id="dataPage" class="hidden">
-    <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
-    <h3>Data Booking</h3>
-    <div>
-      <label>Filter Tanggal: <input type="date" id="filter-date" /></label>
-      <button onclick="loadData()">Lihat Data</button>
-    </div>
-    <div class="table-responsive">
-      <table id="dataTable" class="hidden">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Status</th>
-            <th>Plat</th>
-            <th>Tipe</th>
-            <th>Tahun</th>
-            <th>HP</th>
-            <th>Datang</th>
-            <th>Nama</th>
-            <th>Tanggal Booking</th>
-            <th>Tanggal Penerimaan</th>
-            <th>Jam Penerimaan</th>
-            <th>Via</th>
-            <th>Admin</th>
-            <th>Keluhan</th>
-            <th>Sales</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+<div id="dataPage" class="hidden">
+  <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
+  <h3>Data Booking</h3>
+  
+  <!-- Filter Tanggal + Tombol -->
+  <div>
+    <label>Filter Tanggal: <input type="date" id="filter-date" /></label>
+    <button onclick="loadData()">Lihat Data</button>
   </div>
+
+  <!-- Filter Nopol di bawah tombol -->
+  <div style="margin-top: 12px;">
+      <label>Nomor Polisi:</label>
+      <input type="text" id="filter-nopol" placeholder="Masukkan Nopol" style="width: 150px;" 
+             onkeypress="if(event.key === 'Enter'){ loadData(); }" />
+    </div>
+    
+  
+  <div class="table-responsive" style="margin-top: 10px;">
+    <table id="dataTable" class="hidden">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Status</th>
+          <th>Plat</th>
+          <th>Tipe</th>
+          <th>Tahun</th>
+          <th>HP</th>
+          <th>Datang</th>
+          <th>Nama</th>
+          <th>Tanggal Booking</th>
+          <th>Tanggal Penerimaan</th>
+          <th>Jam Penerimaan</th>
+          <th>Via</th>
+          <th>Admin</th>
+          <th>Keluhan</th>
+          <th>Sales</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
 
   <!-- REKAP -->
   <div id="rekapPage" class="hidden">
@@ -247,7 +259,8 @@
     <div style="margin-top: 20px;">
       <button onclick="loadRekapSales()" class="card-btn" style="margin: 10px;">VIEW REKAP</button>
       <button onclick="showPage('infoCustomerPage')" class="card-btn" style="margin: 10px;">VIEW INFO CUSTOMER</button>
-      <button onclick="showPage('thsBookingPage')" class="card-btn" style="margin: 10px;">Booking THS</button>
+      <button onclick="showPage('thsBookingPage')" class="card-btn" style="margin: 10px;">INPUT Booking THS</button>
+      <button onclick="showPage('thsBookingPage')" class="card-btn" style="margin: 10px;">DELETE BOOKING THS</button>
       <button onclick="loadRekapTHS()" class="card-btn" style="margin: 10px;">VIEW REKAP SALES by THS</button>
       <button onclick="showSalesCharts()" class="card-btn" style="margin: 10px;">LIHAT GRAFIK</button>
       <button onclick="updateSalesRekapSpreadsheet()" class="card-btn" style="margin: 10px; background: #28a745;">UPDATE SPREADSHEET</button>
@@ -1398,14 +1411,21 @@ document.getElementById("bookingForm").addEventListener("submit", function(e) {
 
 function loadData() {
   showLoading('Memproses data booking...');
+
   const tanggal = document.getElementById("filter-date").value;
+  const nopol = document.getElementById("filter-nopol").value.trim(); // ambil input nopol
+
   if (!tanggal) {
     alert("Pilih tanggal dulu!");
     hideLoading();
     return;
   }
 
-  fetch(`${URL}?tanggal_penerimaan=${tanggal}`)
+  const params = new URLSearchParams();
+  params.append("tanggal_penerimaan", tanggal);
+  if (nopol) params.append("nopol", nopol); // kirim kalau diisi
+
+  fetch(`${URL}?${params.toString()}`)
     .then(res => res.json())
     .then(data => {
       const tbody = document.querySelector("#dataTable tbody");
@@ -1419,18 +1439,11 @@ function loadData() {
       }
 
       data.forEach((row, idx) => {
-        
-        const status = row.status_kehadiran || "";
-        // Pastikan status ditampilkan dengan benar - jangan tampilkan "-" jika ada status
-        const displayStatus = status ? status : "-"; 
-        
-        // Debug: Log status for each row
-        console.log(`Row ${idx + 1} - ID: ${row.id_row}, Status: "${status}", Display: "${displayStatus}"`);
-        
+        const status = row.status_kehadiran || "-";
         const tds = `
           <td>${idx + 1}</td>
-          <td><span class="status-${status.toLowerCase().replace(/\s+/g, '-')}">${displayStatus}</span></td>
-          <td>${row.nomor_polisi || row.plat || ""}</td>
+          <td><span class="status-${status.toLowerCase().replace(/\s+/g, '-')}">${status}</span></td>
+          <td>${row.plat || row.nomor_polisi || ""}</td>
           <td>${row.tipe_kendaraan || row.tipe || ""}</td>
           <td>${row.tahun || ""}</td>
           <td>${row.no_hp || row.nohp || ""}</td>
@@ -1446,7 +1459,7 @@ function loadData() {
           <td>
             <button onclick='editRow(${JSON.stringify(row)})'>Edit</button>
             <button onclick='deleteRow("${row.id_row}", "${row.tanggal_penerimaan}", "${row.sheetName}", this)'>Hapus</button>
-            <button onclick='showKedatanganModal(${JSON.stringify(row)})' style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; margin-top: 2px;">Kedatangan</button>
+            <button onclick='showKedatanganModal(${JSON.stringify(row)})'>Kedatangan</button>
           </td>
         `;
         const tr = document.createElement("tr");
@@ -1462,6 +1475,7 @@ function loadData() {
       hideLoading();
     });
 }
+
 
 
 function showNewBookingForm() {

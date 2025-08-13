@@ -16,9 +16,13 @@ function doGet(e) {
   const tahun = e.parameter.tahun || "";
   const id_row = e.parameter.id_row || "";
   const tanggal = e.parameter.tanggal_penerimaan || "";
+  const nopol = (e.parameter.nopol || "").replace(/\s+/g, "").toUpperCase(); // hapus spasi & uppercase
 
   // Ambil data MRS
   if (action === "get_mrs") return doGetMRS(e);
+
+  //Ambil data ths buat delete
+   if (action === "get_ths_for_delete") return doGetTHSForDelete(e);
 
   // Ambil data MRS view
   if (action === "get_mrs_view") return getMRSView(e);
@@ -74,6 +78,14 @@ function doGet(e) {
   const result = [];
 
   for (let i = 1; i < data.length; i++) {
+    // Ambil nopol di data, hapus spasi & uppercase biar seragam
+    const rowNopol = (data[i][2] || "").toString().replace(/\s+/g, "").toUpperCase();
+
+    // Filter kalau parameter nopol ada isinya
+    if (nopol && !rowNopol.includes(nopol)) {
+      continue;
+    }
+
     const row = {};
     for (let j = 0; j < headers.length; j++) {
       let val = data[i][j];
@@ -85,9 +97,11 @@ function doGet(e) {
     result.push(row);
   }
 
-  return ContentService.createTextOutput(JSON.stringify(result))
+  return ContentService
+    .createTextOutput(JSON.stringify(result))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
 
 function getTHSData(bulan, tahun) {
   const parentId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1";
@@ -338,7 +352,7 @@ function doPost(e) {
   // === Handle Booking THS ===
   if (action === "add_ths_booking") return doAddTHS(e);
   if (action === "edit_ths_booking") return editTHSBooking(e);
-  if (action === "delete_ths_booking") return deleteTHSBooking(e);
+  if (action === "delete_ths") return doDeleteTHS(e);;
 
   // === Handle MRS ===
   if (action === "update_mrs_status") return doUpdateMRSStatus(e);
@@ -592,6 +606,103 @@ function doEdit(e) {
   updateRowNumbers(sheet);
   
   return ContentService.createTextOutput("✅ Data berhasil diupdate.");
+}
+
+// === FUNGSI BARU UNTUK MENGAMBIL DATA THS UNTUK DIHAPUS ===
+function doGetTHSForDelete(e) {
+  const nama_sales = e.parameter.nama_sales;
+  const bulan = e.parameter.bulan;
+  const tahun = new Date().getFullYear(); // Asumsi tahun saat ini
+
+  if (!nama_sales || !bulan) {
+    return ContentService.createTextOutput(JSON.stringify({ error: "Nama sales dan bulan harus diisi." }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  const parentFolderId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1"; // Ganti dengan ID folder "form booking" Anda
+  const parentFolder = DriveApp.getFolderById(parentFolderId);
+  const files = parentFolder.getFilesByName(`ths_${bulan}`);
+
+  if (!files.hasNext()) {
+    return ContentService.createTextOutput(JSON.stringify([]))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  const file = files.next();
+  const ss = SpreadsheetApp.open(file);
+  const sheet = ss.getSheetByName(`${tahun}-${bulan}`); // Asumsi nama sheet formatnya YYYY-MM
+
+  if (!sheet) {
+     return ContentService.createTextOutput(JSON.stringify([]))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) {
+    return ContentService.createTextOutput(JSON.stringify([]))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const headers = data[0].map(h => h.toLowerCase().replace(/ /g, '_'));
+  const salesColIndex = headers.indexOf('nama_sales');
+  
+  if (salesColIndex === -1) {
+    return ContentService.createTextOutput(JSON.stringify({ error: "Kolom 'nama_sales' tidak ditemukan." }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const result = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = {};
+    for (let j = 0; j < headers.length; j++) {
+      row[headers[j]] = data[i][j];
+    }
+    // Filter berdasarkan nama sales
+    if (row.nama_sales && String(row.nama_sales).toLowerCase() === String(nama_sales).toLowerCase()) {
+      row.id_row = i; // Tambahkan id_row untuk identifikasi baris
+      result.push(row);
+    }
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+// === FUNGSI BARU UNTUK MENGHAPUS DATA THS ===
+function doDeleteTHS(e) {
+  const id_row = e.parameter.id_row;
+  const bulan = e.parameter.bulan;
+  const tahun = new Date().getFullYear();
+
+  if (!id_row || !bulan) {
+    return ContentService.createTextOutput("❌ Parameter tidak lengkap");
+  }
+
+  const parentFolderId = "1ypv_G7bkmc2BOZAHn6sbD50t9k4aJou1"; // Ganti dengan ID folder "form booking" Anda
+  const parentFolder = DriveApp.getFolderById(parentFolderId);
+  const files = parentFolder.getFilesByName(`ths_${bulan}`);
+
+  if (!files.hasNext()) {
+    return ContentService.createTextOutput("❌ File THS tidak ditemukan.");
+  }
+
+  const file = files.next();
+  const ss = SpreadsheetApp.open(file);
+  const sheet = ss.getSheetByName(`${tahun}-${bulan}`);
+
+  if (!sheet) {
+    return ContentService.createTextOutput("❌ Sheet tidak ditemukan.");
+  }
+  
+  // Hapus baris berdasarkan id_row
+  try {
+    sheet.deleteRow(parseInt(id_row) + 1); // Tambah 1 karena index Apps Script dimulai dari 1
+    return ContentService.createTextOutput("✅ Data THS berhasil dihapus.");
+  } catch (err) {
+    console.error(err);
+    return ContentService.createTextOutput(`❌ Gagal menghapus data: ${err.message}`);
+  }
 }
 
 function doDelete(e) {
