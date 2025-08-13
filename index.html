@@ -21,21 +21,19 @@
   <!-- DASHBOARD -->
   <div id="dashboardPage" class="hidden">
     <button class="logout-btn" onclick="logout()">Logout</button>
-    <h2>Dashnnboard</h2>
+    <h2>Dashboard</h2>
     <div class="dashboard-menu">
       <button class="card-btn" onclick="showNewBookingForm()">Booking Kendaraan</button>
       <button class="card-btn" onclick="showPage('dataPage')">Data Booking</button>
       <button class="card-btn" onclick="showPage('rekapPage')">Rekap Show/No Show/Reschedule</button>
       <button class="card-btn" onclick="showPage('rekapSalesPage')">Rekap Sales</button>
-      <button class="card-btn" onclick="showPage('mrsPage')">MRS (Monthly Reminder System)</button>
-      <button onclick="loadTotalBookingSales()" class="card-btn" style="margin: 10px; background: #007bff; color: white;">
-        TOTAL BOOKING SALES</button>      
+      <button class="card-btn" onclick="showPage('mrsPage')">MRS (Maintenance Reminder System)</button>  
     </div>
   </div>
 
   <!-- FORM BOOKING -->
   <div id="bookingPage" class="hidden">
-    <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
+    <button onclick="showPage('dashboardPage')">Kembali</button>
     <h3>Form Booking</h3>
     <form id="bookingForm">
       <input type="hidden" name="editId" id="editId" />
@@ -139,55 +137,43 @@
   </div>
 
   <!-- DATA -->
-<div id="dataPage" class="hidden">
-  <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
-  <h3>Data Booking</h3>
-  
-  <!-- Filter Tanggal + Tombol -->
-  <div>
-    <label>Filter Tanggal: <input type="date" id="filter-date" /></label>
-    <button onclick="loadData()">Lihat Data</button>
-  </div>
-
-  <!-- Filter Nopol di bawah tombol -->
-  <div style="margin-top: 12px;">
-      <label>Nomor Polisi:</label>
-      <input type="text" id="filter-nopol" placeholder="Masukkan Nopol" style="width: 150px;" 
-             onkeypress="if(event.key === 'Enter'){ loadData(); }" />
+  <div id="dataPage" class="hidden">
+    <button onclick="showPage('dashboardPage')">Kembali</button>
+    <h3>Data Booking</h3>
+    <div>
+      <label>Filter Tanggal: <input type="date" id="filter-date" /></label>
+      <button onclick="loadData()">Lihat Data</button>
     </div>
-    
-  
-  <div class="table-responsive" style="margin-top: 10px;">
-    <table id="dataTable" class="hidden">
-      <thead>
-        <tr>
-          <th>No</th>
-          <th>Status</th>
-          <th>Plat</th>
-          <th>Tipe</th>
-          <th>Tahun</th>
-          <th>HP</th>
-          <th>Datang</th>
-          <th>Nama</th>
-          <th>Tanggal Booking</th>
-          <th>Tanggal Penerimaan</th>
-          <th>Jam Penerimaan</th>
-          <th>Via</th>
-          <th>Admin</th>
-          <th>Keluhan</th>
-          <th>Sales</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div class="table-responsive">
+      <table id="dataTable" class="hidden">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Status</th>
+            <th>Plat</th>
+            <th>Tipe</th>
+            <th>Tahun</th>
+            <th>HP</th>
+            <th>Datang</th>
+            <th>Nama</th>
+            <th>Tanggal Booking</th>
+            <th>Tanggal Penerimaan</th>
+            <th>Jam Penerimaan</th>
+            <th>Via</th>
+            <th>Admin</th>
+            <th>Keluhan</th>
+            <th>Sales</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
-</div>
-
 
   <!-- REKAP -->
   <div id="rekapPage" class="hidden">
-    <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
+    <button onclick="showPage('dashboardPage')">Kembali</button>
     <h3>Rekap Show/No Show/Reschedule</h3>
     <div>
       <label>Filter Tanggal: <input type="date" id="rekap-filter-date" /></label>
@@ -233,7 +219,7 @@
 
   <!-- REKAP SALES -->
 <div id="rekapSalesPage" class="hidden">
-  <button onclick="showPage('dashboardPage')">&larr; Kembali</button>
+  <button onclick="showPage('dashboardPage')">Kembali</button>
   <h3>Rekap Sales</h3>
   <div style="margin: 20px 0;">
     <label>Pilih Bulan: 
@@ -259,8 +245,7 @@
     <div style="margin-top: 20px;">
       <button onclick="loadRekapSales()" class="card-btn" style="margin: 10px;">VIEW REKAP</button>
       <button onclick="showPage('infoCustomerPage')" class="card-btn" style="margin: 10px;">VIEW INFO CUSTOMER</button>
-      <button onclick="showPage('thsBookingPage')" class="card-btn" style="margin: 10px;">INPUT Booking THS</button>
-      <button onclick="showPage('thsBookingPage')" class="card-btn" style="margin: 10px;">DELETE BOOKING THS</button>
+      <button onclick="showPage('thsBookingPage')" class="card-btn" style="margin: 10px;">Booking THS</button>
       <button onclick="loadRekapTHS()" class="card-btn" style="margin: 10px;">VIEW REKAP SALES by THS</button>
       <button onclick="showSalesCharts()" class="card-btn" style="margin: 10px;">LIHAT GRAFIK</button>
       <button onclick="updateSalesRekapSpreadsheet()" class="card-btn" style="margin: 10px; background: #28a745;">UPDATE SPREADSHEET</button>
@@ -272,10 +257,6 @@
   <div id="rekapSalesTableContainer" class="table-responsive"></div>
   <div id="salesChartsContainer" class="hidden" style="margin-top: 30px;">
     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-      <div style="flex: 1; min-width: 300px;">
-        <h4>Pie Chart - Distribusi Sales</h4>
-        <canvas id="salesPieChart" width="400" height="400"></canvas>
-      </div>
       <div style="flex: 1; min-width: 300px;">
         <h4>Bar Chart - Perbandingan Sales</h4>
         <canvas id="salesBarChart" width="400" height="400"></canvas>
@@ -290,7 +271,7 @@
 
 <!-- THS BOOKING PAGE -->
 <div id="thsBookingPage" class="hidden">
-  <button onclick="showPage('rekapSalesPage')">&larr; Kembali</button>
+  <button onclick="showPage('rekapSalesPage')">Kembali</button>
   <h3>Input Data THS</h3>
   <form id="thsBookingForm">
     <label>Nama Sales:
@@ -453,7 +434,7 @@
 
  
   <div id="infoCustomerPage" class="hidden">
-    <button onclick="showPage('rekapSalesPage')">&larr; Kembali</button>
+    <button onclick="showPage('rekapSalesPage')">Kembali</button>
     <h3>Info Customer per Sales</h3>
     <div style="margin: 20px 0;">
       <label>Pilih Sales: <select id="customer-info-sales"></select></label>
@@ -497,7 +478,7 @@
     </div>
   </div>
 
-  <!-- MRS STATUS MODAL -->
+ <!-- MRS STATUS MODAL -->
 <div id="mrsStatusModal" class="modal hidden">
   <div class="modal-content">
     <div class="modal-header">
@@ -535,6 +516,9 @@
     <span id="loadingText">MEMPROSES...</span> <span style="font-size:1.5em;">⏳</span>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 <script>
 const URL = "https://script.google.com/macros/s/AKfycbyvqZaHQL5FuShPpRF8KS63sY9chcE2KZnTpvJrsje90JzTmiEXt4fVhEmErdCNLmsm/exec";
@@ -631,7 +615,8 @@ function hideLoading() {
   document.getElementById("mrs-view-tahun").value = now.getFullYear();
 })();
 
-function loadRekapSales() {
+
+function loadRekapSales(fromChart = false) {
   showLoading('Memproses data rekap sales...');
   const selectedMonth = document.getElementById("rekap-sales-month").value;
   const selectedYear = document.getElementById("rekap-sales-year").value || new Date().getFullYear();
@@ -658,7 +643,16 @@ function loadRekapSales() {
         return;
       }
 
-      // Agregasi per sales
+      // Mode chart → langsung panggil updateSalesCharts()
+      if (fromChart) {
+        updateSalesCharts(filtered);
+        hideLoading();
+        return;
+      }
+
+      // ============================
+      // MODE TABEL
+      // ============================
       const salesStats = {};
       let totalShow = 0, totalNoShow = 0, totalResc = 0, totalAll = 0;
 
@@ -683,11 +677,9 @@ function loadRekapSales() {
         }
       });
 
-      // Ubah ke array dan sort berdasarkan total booking (desc)
       const sortedSales = Object.entries(salesStats)
         .sort((a, b) => b[1].total - a[1].total);
 
-      // Ringkasan total semua sales
       let summaryHtml = `
         <div style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
           <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; min-width: 120px;">
@@ -705,7 +697,6 @@ function loadRekapSales() {
         </div>
       `;
 
-      // Tabel per sales (urut)
       let tableHtml = `
         <table border="1" style="border-collapse: collapse; width: 100%;">
           <thead>
@@ -743,6 +734,14 @@ function loadRekapSales() {
       hideLoading();
     });
 }
+
+// Perbaiki tombol LIHAT GRAFIK agar kirim flag fromChart = true
+function showSalesCharts() {
+  document.getElementById('rekapSalesTableContainer').innerHTML = '';
+  document.getElementById('salesChartsContainer').classList.remove('hidden');
+  loadRekapSales(true);
+}
+
 
 function renderRekapSalesTable(rows) {
   const salesCount = {};
@@ -1109,16 +1108,6 @@ function loadTotalBookingSales() {
     });
 }
 
-
-
-
-
-function showSalesCharts() {
-  document.getElementById('rekapSalesTableContainer').innerHTML = '';
-  document.getElementById('salesChartsContainer').classList.remove('hidden');
-  loadRekapSales(); // Ini akan memanggil updateSalesCharts
-}
-
 function updateSalesCharts(data) {
   const salesStats = {};
   SALES_LIST.forEach(sales => {
@@ -1141,89 +1130,50 @@ function updateSalesCharts(data) {
   const labels = salesWithData.map(([sales, _]) => sales.toUpperCase());
   const values = salesWithData.map(([_, count]) => count);
   const colors = generateColors(salesWithData.length);
-  
- 
-  renderPieChart(labels, values, colors);
-  
-
   renderBarChart(labels, values, colors);
-  
-
   updateSalesSummary(salesWithData);
-}
-
-function renderPieChart(labels, values, colors) {
-  const canvas = document.getElementById('salesPieChart');
-  const ctx = canvas.getContext('2d');
-  
-  
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  const radius = Math.min(centerX, centerY) - 50;
-  
-  const total = values.reduce((sum, val) => sum + val, 0);
-  let currentAngle = 0;
-  
-
-  values.forEach((value, index) => {
-    const sliceAngle = (value / total) * 2 * Math.PI;
-    
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
-    ctx.closePath();
-    ctx.fillStyle = colors[index];
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    
-
-    const labelAngle = currentAngle + sliceAngle / 2;
-    const labelRadius = radius + 30;
-    const labelX = centerX + Math.cos(labelAngle) * labelRadius;
-    const labelY = centerY + Math.sin(labelAngle) * labelRadius;
-    
-    ctx.fillStyle = '#000';
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${labels[index]}: ${value}`, labelX, labelY);
-    
-    currentAngle += sliceAngle;
-  });
 }
 
 function renderBarChart(labels, values, colors) {
   const canvas = document.getElementById('salesBarChart');
   const ctx = canvas.getContext('2d');
   
-  
+  // Bersihkan kanvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
   const maxValue = Math.max(...values);
   const barWidth = 30;
   const barSpacing = 20;
   const chartHeight = canvas.height - 100;
-  const chartWidth = labels.length * (barWidth + barSpacing);
+  
+  // Perbaikan di sini: hitung lebar total grafik dengan benar
+  const chartWidth = labels.length * (barWidth + barSpacing) - barSpacing;
   const startX = (canvas.width - chartWidth) / 2;
   
+  // Gambar sumbu Y dan labelnya (opsional, tapi disarankan)
+  ctx.strokeStyle = '#ccc';
+  ctx.beginPath();
+  ctx.moveTo(startX, 60);
+  ctx.lineTo(startX, canvas.height - 80);
+  ctx.stroke();
 
+  // Gambar setiap batang
   labels.forEach((label, index) => {
     const barHeight = (values[index] / maxValue) * chartHeight;
     const x = startX + index * (barWidth + barSpacing);
     const y = canvas.height - 80 - barHeight;
     
-
+    // Gambar batang
     ctx.fillStyle = colors[index];
     ctx.fillRect(x, y, barWidth, barHeight);
     
-  
+    // Tampilkan nilai di atas batang
     ctx.fillStyle = '#000';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
     ctx.fillText(values[index], x + barWidth / 2, y - 5);
     
-   
+    // Tampilkan label di bawah batang
     ctx.fillText(label, x + barWidth / 2, canvas.height - 20);
   });
 }
@@ -1259,8 +1209,6 @@ function generateColors(count) {
   
   return colors.slice(0, count);
 }
-
-
 
 function updateSalesRekapSpreadsheet() {
   showLoading('Mengupdate data Sales Rekap...');
@@ -1411,21 +1359,14 @@ document.getElementById("bookingForm").addEventListener("submit", function(e) {
 
 function loadData() {
   showLoading('Memproses data booking...');
-
   const tanggal = document.getElementById("filter-date").value;
-  const nopol = document.getElementById("filter-nopol").value.trim(); // ambil input nopol
-
   if (!tanggal) {
     alert("Pilih tanggal dulu!");
     hideLoading();
     return;
   }
 
-  const params = new URLSearchParams();
-  params.append("tanggal_penerimaan", tanggal);
-  if (nopol) params.append("nopol", nopol); // kirim kalau diisi
-
-  fetch(`${URL}?${params.toString()}`)
+  fetch(`${URL}?tanggal_penerimaan=${tanggal}`)
     .then(res => res.json())
     .then(data => {
       const tbody = document.querySelector("#dataTable tbody");
@@ -1439,11 +1380,18 @@ function loadData() {
       }
 
       data.forEach((row, idx) => {
-        const status = row.status_kehadiran || "-";
+        
+        const status = row.status_kehadiran || "";
+        // Pastikan status ditampilkan dengan benar - jangan tampilkan "-" jika ada status
+        const displayStatus = status ? status : "-"; 
+        
+        // Debug: Log status for each row
+        console.log(`Row ${idx + 1} - ID: ${row.id_row}, Status: "${status}", Display: "${displayStatus}"`);
+        
         const tds = `
           <td>${idx + 1}</td>
-          <td><span class="status-${status.toLowerCase().replace(/\s+/g, '-')}">${status}</span></td>
-          <td>${row.plat || row.nomor_polisi || ""}</td>
+          <td><span class="status-${status.toLowerCase().replace(/\s+/g, '-')}">${displayStatus}</span></td>
+          <td>${row.nomor_polisi || row.plat || ""}</td>
           <td>${row.tipe_kendaraan || row.tipe || ""}</td>
           <td>${row.tahun || ""}</td>
           <td>${row.no_hp || row.nohp || ""}</td>
@@ -1459,7 +1407,7 @@ function loadData() {
           <td>
             <button onclick='editRow(${JSON.stringify(row)})'>Edit</button>
             <button onclick='deleteRow("${row.id_row}", "${row.tanggal_penerimaan}", "${row.sheetName}", this)'>Hapus</button>
-            <button onclick='showKedatanganModal(${JSON.stringify(row)})'>Kedatangan</button>
+            <button onclick='showKedatanganModal(${JSON.stringify(row)})' style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; margin-top: 2px;">Kedatangan</button>
           </td>
         `;
         const tr = document.createElement("tr");
@@ -1475,7 +1423,6 @@ function loadData() {
       hideLoading();
     });
 }
-
 
 
 function showNewBookingForm() {
@@ -1789,7 +1736,7 @@ function loadMRSView() {
         const namaCustomer = row.nama_customer || "";
         const waNumber = row.no_hp || "";
         const pesan =
-`Yth. Bapak/Ibu ${namaCustomer}\nKami mengingatkan untuk kendaraan ${row.nomor_polisi || ""} sudah waktunya service berkala (${ch}) atau 6 bulan setelah service kendaraan\n\nApakah Bapak/Ibu bersedia kami booking kan di Bulan ${row.bulan || ""} ${tahun}?\n\nBOOKING Maksimal H-2 / H-1 sebelum service\n\nAbaikan pesan ini jika sudah melakukan service\n\nKami pun memiliki layanan THS - Auto2000 Home Service yang dapat melakukan service di tempat anda (rumah/kantor, dsb). \n\nCintai Keluarga dan Kendaraan Anda!\n\nHotline : 022-602.2000 / 6010010\n\nSenin - Jum'at : 08.00 s/d 16.00\nSabtu : 08.00 s/d 13:00\nHari Minggu dan hari besar operasional booking service Libur.\n\nJl. Soekarno Hatta No. 145 Bandung ( Caringin )`;
+`Yth. Bapak/Ibu ${namaCustomer}\nKami mengingatkan untuk kendaraan ${row.nomor_polisi || ""} sudah waktunya service berkala (${ch} KM) atau 6 bulan setelah service kendaraan\n\nApakah Bapak/Ibu bersedia kami booking kan di Bulan ${row.bulan || ""} ${tahun}?\n\nBOOKING Maksimal H-2 / H-1 sebelum service\n\nAbaikan pesan ini jika sudah melakukan service\n\nKami pun memiliki layanan THS - Auto2000 Home Service yang dapat melakukan service di tempat anda (rumah/kantor, dsb). \n\nCintai Keluarga dan Kendaraan Anda!\n\nHotline : 022-602.2000 / 6010010\n\nSenin - Jum'at : 08.00 s/d 16.00\nSabtu : 08.00 s/d 13:00\nHari Minggu dan hari besar operasional booking service Libur.\n\nJl. Soekarno Hatta No. 145 Bandung ( Caringin )`;
         const waLinkApp = `https://wa.me/${waNumber}?text=${encodeURIComponent(pesan)}`;
         const waLinkWeb = `https://web.whatsapp.com/send?phone=${waNumber}&text=${encodeURIComponent(pesan)}`;
         const tds = `
@@ -1862,7 +1809,6 @@ function deleteMRS(nomor_polisi, bulan, tahun, btn) {
       }
     });
 }
-
 
 
 
@@ -2129,7 +2075,39 @@ function sendWhatsApp(waNumber, pesan) {
   }
 }
 
+// ======================
+// Hapus MRS
+// ======================
+function deleteMRS(nomor_polisi, bulan, tahun, btn) {
+  if (!confirm("Yakin ingin menghapus data MRS ini?")) return;
 
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Menghapus...";
+  }
+
+  const params = new URLSearchParams();
+  params.append("action", "delete_mrs");
+  params.append("nomor_polisi", nomor_polisi);
+  params.append("bulan", bulan);
+  params.append("tahun", tahun);
+
+  fetch(URL, { method: "POST", body: params })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      loadMRSData();
+    })
+    .catch(err => {
+      alert("Gagal menghapus data MRS: " + err);
+    })
+    .finally(() => {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Hapus";
+      }
+    });
+}
 
 function toggleOtherSalesBooking() {
   const select = document.getElementById('sales_select');
